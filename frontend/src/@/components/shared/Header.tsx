@@ -1,6 +1,3 @@
-import { BiMenu } from "react-icons/bi";
-import { Button } from "../ui/button";
-
 import MobileSidebar from "./MobileSidebar";
 type headerProps = {
   type: "message" | "home";
@@ -9,15 +6,9 @@ type headerProps = {
 const Header = ({ type }: headerProps) => {
   return (
     <header className="p-2 w-full h-16  flex items-center gap-2  bg-slate-200 shadow-lg">
-      <MobileSidebar>
-        <Button
-          size="icon"
-          variant={"ghost"}
-          className="rounded-full flex items-center justify-center md:hidden text-center"
-        >
-          <BiMenu size={25} />
-        </Button>
-      </MobileSidebar>
+      <div className="block lg:hidden ">
+        <MobileSidebar />
+      </div>
       {type === "message" && (
         <div className="flex items-center  gap-2">
           <img

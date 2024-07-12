@@ -1,14 +1,15 @@
 import { LuLogOut } from "react-icons/lu";
 import SidebarItem from "./SidebarItem";
 import { Button } from "../ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { User } from "../../../types/type";
+import { UserSkeleton } from "../Loaders/UserSkeleton";
 
 export default function Sidebar() {
   const queryClient = useQueryClient();
-  // const navigate = useNavigate();
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       try {
@@ -27,28 +28,22 @@ export default function Sidebar() {
       toast.error(error.message || "Logout failed");
     },
   });
-  // const { mutate, isPending } = useMutation({
-  //   mutationFn: async () => {
-  //     try {
-  //       const res = await fetch("/api/auth/logout", {
-  //         method: "POST",
-  //       });
-  //       const data = await res.json();
 
-  //       if (!res.ok) {
-  //         throw new Error(data.error || "Something went wrong");
-  //       }
-  //     } catch (error: any) {
-  //       throw new Error(error);
-  //     }
-  //   },
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({ queryKey: ["authUser"] });
-  //   },
-  //   onError: () => {
-  //     toast.error("Logout failed");
-  //   },
-  // });
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      try {
+        const { data } = await axios.get("/api/messages/conversations");
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        return data;
+      } catch (error: any) {
+        throw new Error(error.message || "error in getting all the user");
+      }
+    },
+  });
+  console.log(users);
   const handleLogout = (e: React.FormEvent) => {
     e.preventDefault();
     mutate();
@@ -60,10 +55,24 @@ export default function Sidebar() {
         CHAT APP
       </div>
       <div className="flex flex-col gap-2 ">
-        <SidebarItem id={"2"} />
-        <SidebarItem id={"23"} />
-        <SidebarItem id={"232"} />
-        <SidebarItem id={"2323"} />
+        {isLoading &&
+          Array.from({ length: 3 }, (_, index: number) => index).map(
+            (_, i: number) => <UserSkeleton key={i} />
+          )}
+        {!users && !isLoading && (
+          <p className="text-center text-sm text-muted-foreground py-10">
+            Currently&apos;s you don&apos;t have any past conversations
+          </p>
+        )}
+        {!isLoading &&
+          users?.map((user: User) => (
+            <SidebarItem
+              key={user.id}
+              id={user.id}
+              fullname={user.fullname}
+              profilePic={user.profilePic}
+            />
+          ))}
       </div>
       <Button
         onClick={handleLogout}
