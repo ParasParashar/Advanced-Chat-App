@@ -6,14 +6,15 @@ import messageRoute from './routes/messages.route.js'
 
 
 dotenv.config();
+
 const app = express();
 const PORT = 4000
 
 app.use(cookieparser())
 app.use(express.json());
 
-app.get('/api/auth', authRoute)
-app.get('/api/messages', messageRoute)
+app.use('/api/auth', authRoute)
+app.use('/api/messages', messageRoute)
 
 
 app.listen(PORT, () => {

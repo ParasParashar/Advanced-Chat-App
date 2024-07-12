@@ -6,13 +6,18 @@ import generateToken from '../utils/generateToken.js';
 
 export const loginController = async (req: Request, res: Response) => {
     try {
-        const { username, password } = req.body
+        const { username, password } = req.body;
+        if (!username || !password) {
+            return res.status(401).json({ error: "Invalid crendentails" });
+        }
+
         const user = await prisma.user.findUnique({
             where: {
                 username: username
             }
         });
         if (!user) {
+            console.log('soskd')
             return res.status(404).json({ error: "User not found" });
         }
         const isPasswordCorrect = await bcrypt.compare(password, user?.password);
@@ -37,8 +42,8 @@ export const loginController = async (req: Request, res: Response) => {
 
 export const signupController = async (req: Request, res: Response) => {
     try {
-        const { fullname, username, password, confirmPassword, gender } = req.body;
-        if (!fullname || !username || !password || !confirmPassword || !gender) {
+        const { fullname, username, password, confirmPassword, Gender } = req.body;
+        if (!fullname || !username || !password || !confirmPassword || !Gender) {
             return res.status(404).json({ error: 'Please fill all the fields' });
         }
         if (password !== confirmPassword) {
@@ -62,20 +67,21 @@ export const signupController = async (req: Request, res: Response) => {
                 fullname,
                 username,
                 password: hashPassword,
-                gender,
-                profilePic: gender === 'male' ? boyProfilePic : girlProfilePic
+                gender: Gender,
+                profilePic: Gender === 'male' ? boyProfilePic : girlProfilePic
             }
         });
         if (newUser) {
             generateToken(newUser.id, res)
-            res.status(201).json({
+            return res.status(201).json({
                 id: newUser.id,
                 fullname: newUser.fullname,
                 username: newUser.username,
                 profilePic: newUser.profilePic,
             });
+
         } else {
-            res.status(400).json({ error: "Invalid User data" });
+            return res.status(400).json({ error: "Invalid User data" });
         }
 
     } catch (error: any) {

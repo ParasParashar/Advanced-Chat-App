@@ -1,6 +1,10 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { Button } from "../ui/button";
+import { FaSpinner } from "react-icons/fa";
 
 const LoginPage = () => {
   const [formInput, setFormInput] = useState({
@@ -11,14 +15,35 @@ const LoginPage = () => {
     setFormInput({ ...formInput, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const queryClient = useQueryClient();
+  const { mutate, isError, isPending, error } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await axios.post("/api/auth/login", {
+          username: formInput.username,
+          password: formInput.password,
+        });
+
+        if (res.status >= 400) {
+          throw new Error(res.data.error || "Failed to login");
+        }
+
+        return res.data;
+      } catch (error: any) {
+        throw new Error(error.response.data.error || "Failed to login");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formInput.username.trim() || !formInput.password.trim()) {
-      toast.error("Please enter all the required fields");
-      return null;
-    }
-    console.log(formInput);
-    toast.success("formInput");
+    mutate();
   };
 
   return (
@@ -62,6 +87,10 @@ const LoginPage = () => {
               className="w-full px-3 py-2 mt-1 text-gray-900 bg-gray-200 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
             />
           </div>
+          {isError && (
+            <p className="text-red-500 text-center">{error.message}</p>
+          )}
+
           <div className="flex items-center justify-between">
             <Link
               to="/signup"
@@ -72,9 +101,16 @@ const LoginPage = () => {
                 &nbsp;Sign up
               </span>
             </Link>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-500">
-              Login
-            </button>
+            <Button
+              size={"lg"}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-500"
+            >
+              {isPending ? (
+                <FaSpinner size={10} className="animate-spin" />
+              ) : (
+                "Login"
+              )}
+            </Button>
           </div>
         </form>
       </div>
