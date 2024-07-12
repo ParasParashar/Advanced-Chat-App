@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { redirect, useNavigate } from "react-router-dom";
 
 export default function Sidebar() {
   const queryClient = useQueryClient();
