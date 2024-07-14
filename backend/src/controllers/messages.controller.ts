@@ -87,28 +87,6 @@ export const getMessageController = async (req: Request, res: Response) => {
 
 };
 
-export const getUserforSidebar = async (req: Request, res: Response) => {
-    try {
-        const users = await prisma.user.findMany({
-            where: {
-                id: {
-                    not: req.user.id
-                }
-            },
-            select: {
-                id: true,
-                fullname: true,
-                profilePic: true
-            }
-        });
-
-        res.status(200).json(users)
-    } catch (error: any) {
-        console.log('Error in getting user for the sidebar', error.message);
-        return res.status(5e00).json({ error: 'Server error' + error.message });
-    }
-
-}
 export const getUserConversations = async (req: Request, res: Response) => {
     try {
         let conversations = await prisma.conversation.findMany({
@@ -176,3 +154,66 @@ export const getUserConversations = async (req: Request, res: Response) => {
 
 }
 
+
+export const getUserforSidebar = async (req: Request, res: Response) => {
+    try {
+        const query = req.query.query as string;
+
+        let users;
+        if (query) {
+            users = await prisma.user.findMany({
+                where: {
+                    id: {
+                        not: req.user.id
+                    },
+                    OR: [
+                        {
+                            username: {
+                                contains: query,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            fullname: {
+                                contains: query,
+                                mode: 'insensitive'
+                            }
+                        }
+                    ]
+                },
+                take: 4,
+                select: {
+                    username: true,
+                    id: true,
+                    profilePic: true,
+                    fullname: true
+                }
+            });
+        } else {
+            users = await prisma.user.findMany({
+                where: {
+                    id: {
+                        not: req.user.id
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                take: 4,
+                select: {
+                    username: true,
+                    id: true,
+                    profilePic: true,
+                    fullname: true
+                }
+            });
+        }
+        if (!users) {
+            return res.status(404).json({ error: 'Search User not found' })
+        }
+        res.status(200).json(users);
+    } catch (error: any) {
+        console.log('Error in getting user for the sidebar', error.message);
+        return res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+}

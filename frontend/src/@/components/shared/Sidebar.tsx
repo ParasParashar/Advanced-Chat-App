@@ -7,6 +7,8 @@ import { FaSpinner } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { UserSkeleton } from "../Loaders/UserSkeleton";
 import { SidebarData } from "../../../types/type";
+import SearchModal from "./SearchModal";
+import { Link } from "react-router-dom";
 
 export default function Sidebar() {
   const queryClient = useQueryClient();
@@ -50,14 +52,18 @@ export default function Sidebar() {
 
   return (
     <aside className="bg-secondary w-full h-full  relative shadow-lg">
-      <div className=" flex items-center gap-x-3 justify-center  w-full p-2 py-4  bg-sky-200 ">
+      <div className=" flex items-center gap-x-3 justify-between  w-full p-2 py-4  bg-sky-200 ">
         <img
           src="/public/chatImage.png"
           alt="Logo"
           className="w-10 h-10 object-cover "
         />
-        <p className="text-2xl font-bold font-serif  text-center">CHAT APP</p>
+        <Link to="/">
+          <p className="text-2xl font-bold font-serif  text-center">CHAT APP</p>
+        </Link>
+        <SearchModal />
       </div>
+      {/* <SearchUser /> */}
       <div className="flex flex-col gap-2 ">
         {isLoading &&
           Array.from({ length: 3 }, (_, index: number) => index).map(

@@ -37,7 +37,10 @@ const MessageInput = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full  flex items-center justify-center  border-sky-50 px-3 p-2 pb-1 gap-1 bg-gray-200 rounded-full"
+      className="w-full  flex items-center justify-center 
+       border-sky-50 px-3 p-2 pb-1 gap-1 rounded-full
+       bg-gradient-to-l from-sky-50 to-indigo-200 
+       "
     >
       <Emoji onEmojiClick={handleEmojiClick} />
       <Input

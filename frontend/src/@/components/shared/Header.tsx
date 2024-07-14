@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import useConversation from "../../../hooks/useConversation";
 import MobileSidebar from "./MobileSidebar";
 type headerProps = {
@@ -8,11 +9,11 @@ const Header = ({ type }: headerProps) => {
   const { selectedConversation } = useConversation();
 
   return (
-    <header className="p-2 w-full h-16  flex items-center gap-2  bg-slate-200 shadow-lg">
+    <header className="p-2 w-full h-16  flex items-center gap-2  bg-gradient-to-r from-sky-50 to-indigo-200 shadow-lg">
       <div className="block lg:hidden ">
         <MobileSidebar />
       </div>
-      {type === "message" && (
+      {type === "message" ? (
         <div className="flex items-center  gap-2">
           <img
             className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
@@ -23,6 +24,12 @@ const Header = ({ type }: headerProps) => {
             {selectedConversation?.fullName}
           </span>
         </div>
+      ) : (
+        <Link to={"/"}>
+          <h5 className="text-xl text-center font-serif  font-bold">
+            Chat-app
+          </h5>
+        </Link>
       )}
     </header>
   );
