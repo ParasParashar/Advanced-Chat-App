@@ -67,3 +67,17 @@
       @apply bg-background text-foreground;
     }
   }
+
+
+  .main-scrollbar::-webkit-scrollbar {
+    background-color: transparent;
+    width: 10px;
+    height: 5px;
+    border-radius: 2px;
+  }
+  .main-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .main-scrollbar::-webkit-scrollbar-thumb {
+    @apply    bg-muted-foreground/40 rounded-lg transition-all duration-200  hover:bg-gray-400/70 dark:bg-gray-600 dark:hover:bg-gray-500;
+  }

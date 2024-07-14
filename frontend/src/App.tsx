@@ -6,9 +6,10 @@ import LoginPage from "./@/components/pages/LoginPage";
 import SignUpPage from "./@/components/pages/SignupPage";
 import { useQuery } from "@tanstack/react-query";
 import PageLoader from "./@/components/Loaders/PageLoader";
+import { User } from "./types/type";
 
 export default function App() {
-  const { data: authUser, isLoading } = useQuery({
+  const { data: authUser, isLoading } = useQuery<User>({
     queryKey: ["authUser"],
     queryFn: async () => {
       try {

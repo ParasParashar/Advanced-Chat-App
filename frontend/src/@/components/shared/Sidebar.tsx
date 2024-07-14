@@ -5,8 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { User } from "../../../types/type";
 import { UserSkeleton } from "../Loaders/UserSkeleton";
+import { SidebarData } from "../../../types/type";
 
 export default function Sidebar() {
   const queryClient = useQueryClient();
@@ -43,7 +43,6 @@ export default function Sidebar() {
       }
     },
   });
-  console.log(users);
   const handleLogout = (e: React.FormEvent) => {
     e.preventDefault();
     mutate();
@@ -51,8 +50,13 @@ export default function Sidebar() {
 
   return (
     <aside className="bg-secondary w-full h-full  relative shadow-lg">
-      <div className="text-2xl font-bold font-serif  text-center  w-full p-2 py-4  bg-sky-200 ">
-        CHAT APP
+      <div className=" flex items-center gap-x-3 justify-center  w-full p-2 py-4  bg-sky-200 ">
+        <img
+          src="/public/chatImage.png"
+          alt="Logo"
+          className="w-10 h-10 object-cover "
+        />
+        <p className="text-2xl font-bold font-serif  text-center">CHAT APP</p>
       </div>
       <div className="flex flex-col gap-2 ">
         {isLoading &&
@@ -65,12 +69,13 @@ export default function Sidebar() {
           </p>
         )}
         {!isLoading &&
-          users?.map((user: User) => (
+          users?.map((user: SidebarData) => (
             <SidebarItem
               key={user.id}
-              id={user.id}
-              fullname={user.fullname}
-              profilePic={user.profilePic}
+              id={user.participants.id}
+              fullname={user.participants.fullname}
+              lastMessage={user.message.body}
+              profilePic={user.participants.profilePic}
             />
           ))}
       </div>

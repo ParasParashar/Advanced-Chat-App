@@ -4,3 +4,12 @@ export type User = {
     fullname: string
     profilePic: string
 }
+
+export type SidebarData = {
+    message: {
+        body: string
+        conversationId: string
+    },
+    participants: User,
+    id: string
+}

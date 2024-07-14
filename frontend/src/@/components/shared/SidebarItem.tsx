@@ -1,16 +1,24 @@
 import { useNavigate } from "react-router-dom";
 import useSidebarHook from "../../../hooks/useSidebarHook";
+import useConversation from "../../../hooks/useConversation";
 
 type props = {
   id: string;
   fullname: string;
   profilePic: string;
+  lastMessage?: string;
 };
-const SidebarItem = ({ id, fullname, profilePic }: props) => {
+const SidebarItem = ({ id, fullname, profilePic, lastMessage }: props) => {
   const { onClose } = useSidebarHook();
+  const { setSelectedConversation } = useConversation();
   const navigate = useNavigate();
 
   const handleClick = () => {
+    setSelectedConversation({
+      id: id,
+      fullName: fullname,
+      profilePic: profilePic,
+    });
     navigate(`/messages/${id}`);
     onClose();
   };
@@ -23,7 +31,7 @@ const SidebarItem = ({ id, fullname, profilePic }: props) => {
       <img src={profilePic} alt="User Image" className="relative  size-10" />
       <div className="flex flex-col gap-0.5 ">
         <p className="text-lg font-semibold">{fullname}</p>
-        <span className="text-sm">this is the last message</span>
+        <span className="text-sm">{lastMessage!}</span>
       </div>
     </div>
   );
