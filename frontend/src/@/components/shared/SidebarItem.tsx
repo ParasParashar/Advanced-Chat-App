@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import useSidebarHook from "../../../hooks/useSidebarHook";
 import useConversation from "../../../hooks/useConversation";
+import { cn } from "../../lib/utils";
 
 type props = {
   id: string;
@@ -17,7 +18,7 @@ const SidebarItem = ({
   username,
 }: props) => {
   const { onClose } = useSidebarHook();
-  const { setSelectedConversation } = useConversation();
+  const { setSelectedConversation, selectedConversation } = useConversation();
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -30,10 +31,15 @@ const SidebarItem = ({
     onClose();
   };
 
+  const isActive = id === selectedConversation?.id;
+
   return (
     <div
       onClick={handleClick}
-      className="flex items-center cursor-pointer  duration-200 px-2 p-1  justify-start  transition-all ease-in-out w-full gap-2   bg-sky-50 hover:bg-sky-100"
+      className={cn(
+        "flex items-center cursor-pointer  duration-200 px-2 p-1  justify-start  transition-all ease-in-out w-full gap-2   bg-sky-50 hover:bg-sky-200/80",
+        isActive && " bg-blue-200/50"
+      )}
     >
       <img src={profilePic} alt="User Image" className="relative  size-10" />
       <div className="flex flex-col w-full gap-0.5 ">

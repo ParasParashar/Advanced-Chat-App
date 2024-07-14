@@ -6,7 +6,7 @@ const HomePage = () => {
       <Header type="home" />
 
       <div className="flex flex-col items-center justify-center p-8 mx-auto my-auto text-center    bg-indigo-100 bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-30 rounded-lg shadow-md">
-        <img src="./public/chatImage.png" alt="image" />
+        <img src="/chatImage.png" alt="image" />
         <h3 className="text-3xl font-serif text-white">
           Select a user to start chating💬💬💬
         </h3>

@@ -50,9 +50,16 @@ const MessageInput = () => {
         }
         value={message}
         className="text-xl w-full ring-0 focus-visible:ring-0   outline-none p-3   rounded-sm border-none"
+        autoFocus
+        required
       />
-      <Button disabled={isPending} variant={"ghost"}>
-        <BiSend size={30} className="text-blue-500" />
+      <Button
+        size={"icon"}
+        disabled={isPending}
+        variant={"ghost"}
+        className="group"
+      >
+        <BiSend size={30} className="text-blue-500 group-hover:text-blue-400" />
       </Button>
     </form>
   );
