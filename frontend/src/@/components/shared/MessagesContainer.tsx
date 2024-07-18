@@ -1,13 +1,17 @@
 import LoadingSpinner from "../Loaders/LoadingSpinner";
 import MessageCard from "./MessageCard";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import useConversation, { MessageType } from "../../../hooks/useConversation";
 import { useEffect, useRef } from "react";
 import { FaComments } from "react-icons/fa";
+import { useSocketContext } from "../providers/SocketProvider";
 
 const MessagesContainer = () => {
+  const queryClient = useQueryClient();
+
+  const { socket } = useSocketContext();
   const { selectedConversation } = useConversation();
   const { id } = useParams();
   const messageRef = useRef<HTMLDivElement>(null);
@@ -27,6 +31,24 @@ const MessagesContainer = () => {
     },
     refetchInterval: 5000,
   });
+
+  useEffect(() => {
+    if (id) {
+      socket?.on("newMessage", (newMessage) => {
+        queryClient.setQueryData(
+          ["getMessage", id],
+          (oldData: MessageType[]) => {
+            return oldData ? [...oldData, newMessage] : [newMessage];
+          }
+        );
+      });
+
+      // Clean up the event listener on unmount
+      return () => {
+        socket?.off("newMessage");
+      };
+    }
+  }, [id, queryClient]);
 
   useEffect(() => {
     if (data) {

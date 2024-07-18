@@ -5,6 +5,7 @@ import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { SocketContextProvider } from "./@/components/providers/SocketProvider.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,8 +19,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <App />
-        <Toaster />
+        <SocketContextProvider>
+          <App />
+          <Toaster />
+        </SocketContextProvider>
       </QueryClientProvider>
     </BrowserRouter>
   </React.StrictMode>

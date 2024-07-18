@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../db/prisma.js";
+import { Socket } from "socket.io";
+import { getReceiverSocketId, io } from "../socket/socket.js";
 
 export const sendMessageController = async (req: Request, res: Response) => {
     try {
@@ -47,6 +49,13 @@ export const sendMessageController = async (req: Request, res: Response) => {
             });
 
         }
+        // adding socket io
+        const receiverSocketId = getReceiverSocketId(receiverId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('newMessage', newMessage)
+        }
+        // also sending the response 
+
         return res.status(200).json(newMessage)
 
     } catch (error: any) {
@@ -155,7 +164,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Server error' + error.message });
     }
 
-}
+};
 
 export const getUserforSidebar = async (req: Request, res: Response) => {
     try {
@@ -218,7 +227,7 @@ export const getUserforSidebar = async (req: Request, res: Response) => {
         console.log('Error in getting user for the sidebar', error.message);
         return res.status(500).json({ error: 'Server error: ' + error.message });
     }
-}
+};
 
 export const deleteChatsController = async (req: Request, res: Response) => {
     try {
@@ -249,18 +258,17 @@ export const deleteChatsController = async (req: Request, res: Response) => {
         console.log('Error in deleting user chats', error.message);
         return res.status(500).json({ error: 'Server error: ' + error.message });
     }
-}
+};
+
 export const deleteConversationController = async (req: Request, res: Response) => {
     try {
         const { id: conversationId } = req.params;
-        console.log(conversationId)
         const conversation = await prisma.conversation.findUnique({
             where: {
                 id: conversationId
             },
         });
 
-        console.log(conversation, 'con')
         if (!conversation) {
             return res.status(404).json({ error: "Conversation not found." });
         }
@@ -275,11 +283,10 @@ export const deleteConversationController = async (req: Request, res: Response) 
             },
         });
 
-        console.log(dm, dc)
         res.status(200).json({ message: 'Conversation deleting successfully' });
     } catch (error: any) {
         console.log('Error in deleting conversations', error.message);
         return res.status(500).json({ error: 'Server error: ' + error.message });
     }
-}
+};
 

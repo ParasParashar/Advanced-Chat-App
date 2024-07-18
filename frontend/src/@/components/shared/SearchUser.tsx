@@ -61,7 +61,7 @@ const SearchUser = () => {
           No users found with this name
         </p>
       )}
-      <div className="flex-1 overflow-y-auto main-scrollbar">
+      <div className="flex-1 overflow-y-auto overflow-hidden main-scrollbar">
         {data?.length > 0 && (
           <ul className="flex flex-col overflow-y-auto transition-all duration-300 ease-in gap-2 mt-2">
             {data.map((user: User) => (

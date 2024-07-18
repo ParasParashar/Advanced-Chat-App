@@ -63,7 +63,7 @@ export default function Sidebar() {
         <SearchModal />
       </div>
       {/* <SearchUser /> */}
-      <div className="flex flex-col gap-2 ">
+      <div className="flex flex-col gap-2  ">
         {isLoading &&
           Array.from({ length: 3 }, (_, index: number) => index).map(
             (_, i: number) => <UserSkeleton key={i} />
