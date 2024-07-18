@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import prisma from "../../db/prisma.js";
+import prisma from "../db/prisma.js";
 import { Socket } from "socket.io";
 import { getReceiverSocketId, io } from "../socket/socket.js";
 

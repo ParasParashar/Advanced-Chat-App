@@ -41,7 +41,7 @@ const LoginPage = () => {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutate();
   };
