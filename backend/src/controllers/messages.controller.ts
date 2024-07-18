@@ -144,8 +144,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
             return conversation;
         }));
 
-        const data = conversations.map((item) => ({ message: item.messages[0], participants: item.participants[0], id: item.id }))
-
+        const data = conversations.map((item) => ({ message: item?.messages[0] ? item?.messages[0] : { body: "New Chat" }, participants: item.participants[0], id: item.id }))
         res.status(200).json(data)
     } catch (error: any) {
         console.log('Error in getting user coversation', error.message);
@@ -153,7 +152,6 @@ export const getUserConversations = async (req: Request, res: Response) => {
     }
 
 }
-
 
 export const getUserforSidebar = async (req: Request, res: Response) => {
     try {
@@ -217,3 +215,34 @@ export const getUserforSidebar = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Server error: ' + error.message });
     }
 }
+export const deleteChatsController = async (req: Request, res: Response) => {
+    try {
+        const { id: receiverId } = req.params;
+        const senderId = req.user.id;
+        const conversations = await prisma.conversation.findFirst({
+            where: {
+                participantsIds: {
+                    hasEvery: [senderId, receiverId]
+                }
+            },
+            select: {
+                id: true
+            }
+        })
+        if (!conversations) {
+            return res.status(402).json({ error: "You don't have any conversation with this user." })
+        }
+
+        await prisma.message.deleteMany({
+            where: {
+                conversationId: conversations.id,
+            },
+        });
+
+        res.status(200).json({ message: 'Chat Clear Successfully' });
+    } catch (error: any) {
+        console.log('Error in deleting user chats', error.message);
+        return res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+}
+

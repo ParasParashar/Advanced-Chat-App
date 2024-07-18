@@ -3,11 +3,12 @@ import MessageCard from "./MessageCard";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { MessageType } from "../../../hooks/useConversation";
+import useConversation, { MessageType } from "../../../hooks/useConversation";
 import { useEffect, useRef } from "react";
 import { FaComments } from "react-icons/fa";
 
 const MessagesContainer = () => {
+  const { selectedConversation } = useConversation();
   const { id } = useParams();
   const messageRef = useRef<HTMLDivElement>(null);
   const { data, isPending, error } = useQuery({
@@ -43,7 +44,8 @@ const MessagesContainer = () => {
         <div className="flex flex-col items-center justify-center p-8 mx-auto my-auto text-center    bg-indigo-100 bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-30 rounded-lg shadow-md">
           <FaComments className="text-blue-500 text-6xl mb-4" />
           <h3 className="text-3xl font-serif text-gray-500">
-            Currently you don &apos;t have any previous conversations.
+            Currently you don &apos;t have any previous conversations with{" "}
+            {selectedConversation?.fullName}.
           </h3>
         </div>
       )}

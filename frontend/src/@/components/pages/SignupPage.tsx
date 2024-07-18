@@ -70,7 +70,6 @@ const SignUpPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutate(formData);
-    console.log(formData);
   };
 
   return (

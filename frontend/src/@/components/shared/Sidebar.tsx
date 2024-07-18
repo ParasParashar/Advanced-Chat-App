@@ -54,7 +54,7 @@ export default function Sidebar() {
     <aside className="bg-secondary w-full h-full  relative shadow-lg">
       <div className=" flex items-center gap-x-3 justify-between  w-full p-2 py-4  bg-sky-200 ">
         <img
-          src="/public/chatImage.png"
+          src="/chatImage.png"
           alt="Logo"
           className="w-10 h-10 object-cover "
         />
