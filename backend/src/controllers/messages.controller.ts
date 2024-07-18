@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
-import prisma from "../db/prisma.js";
-import { Socket } from "socket.io";
+import prisma from '../db/prisma.js';
 import { getReceiverSocketId, io } from "../socket/socket.js";
 
 export const sendMessageController = async (req: Request, res: Response) => {
