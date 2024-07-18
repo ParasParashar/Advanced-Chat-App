@@ -136,12 +136,12 @@ export const getUserConversations = async (req: Request, res: Response) => {
         });
 
 
-        conversations = await Promise.all(conversations.map(async conversation => {
+        conversations = await Promise.all(conversations.map(async (conversation: any) => {
             if (conversation.participantsIds.length > 0) {
                 conversation.participants = await prisma.user.findMany({
                     where: {
                         id: {
-                            in: conversation.participantsIds.filter(id => id !== req.user.id)
+                            in: conversation.participantsIds.filter((id: string) => id !== req.user.id)
                         },
                     },
                     select: {
@@ -154,7 +154,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
             }
             return conversation;
         }));
-        const data = conversations.map((item) => {
+        const data = conversations.map((item: any) => {
             return { message: item?.messages[0] ? item?.messages[0] : { body: "New Chat", createdAt: Date.now() }, participants: item.participants[0], id: item.id }
         }).sort((b: any, a: any) => a.message.createdAt - b.message.createdAt);
         res.status(200).json(data)
