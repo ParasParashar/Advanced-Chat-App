@@ -71,6 +71,7 @@ const SearchUser = () => {
                 fullname={user.fullname}
                 profilePic={user.profilePic}
                 username={user.username}
+                type="search"
               />
             ))}
           </ul>

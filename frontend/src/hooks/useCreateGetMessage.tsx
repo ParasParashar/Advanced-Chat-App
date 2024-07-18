@@ -14,12 +14,15 @@ export const useCreateMessage = () => {
       return res.data;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData<MessageType[]>(
-        ["getMessage", id],
-        (oldMessages) => {
-          return oldMessages ? [...oldMessages, data] : [data];
-        }
-      );
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["conversations"] }),
+        queryClient.setQueryData<MessageType[]>(
+          ["getMessage", id],
+          (oldMessages) => {
+            return oldMessages ? [...oldMessages, data] : [data];
+          }
+        ),
+      ]);
     },
   });
 

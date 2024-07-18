@@ -100,7 +100,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
                     select: {
                         body: true,
                         conversationId: true,
-                        // senderId: true
+                        createdAt: true
                     },
                     orderBy: {
                         createdAt: 'desc'
@@ -121,6 +121,9 @@ export const getUserConversations = async (req: Request, res: Response) => {
                     }
                 }
             },
+            orderBy: {
+                updatedAt: 'desc',
+            }
 
         });
 
@@ -143,8 +146,9 @@ export const getUserConversations = async (req: Request, res: Response) => {
             }
             return conversation;
         }));
-
-        const data = conversations.map((item) => ({ message: item?.messages[0] ? item?.messages[0] : { body: "New Chat" }, participants: item.participants[0], id: item.id }))
+        const data = conversations.map((item) => {
+            return { message: item?.messages[0] ? item?.messages[0] : { body: "New Chat", createdAt: Date.now() }, participants: item.participants[0], id: item.id }
+        }).sort((b: any, a: any) => a.message.createdAt - b.message.createdAt);
         res.status(200).json(data)
     } catch (error: any) {
         console.log('Error in getting user coversation', error.message);
@@ -215,6 +219,7 @@ export const getUserforSidebar = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Server error: ' + error.message });
     }
 }
+
 export const deleteChatsController = async (req: Request, res: Response) => {
     try {
         const { id: receiverId } = req.params;
@@ -242,6 +247,38 @@ export const deleteChatsController = async (req: Request, res: Response) => {
         res.status(200).json({ message: 'Chat Clear Successfully' });
     } catch (error: any) {
         console.log('Error in deleting user chats', error.message);
+        return res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+}
+export const deleteConversationController = async (req: Request, res: Response) => {
+    try {
+        const { id: conversationId } = req.params;
+        console.log(conversationId)
+        const conversation = await prisma.conversation.findUnique({
+            where: {
+                id: conversationId
+            },
+        });
+
+        console.log(conversation, 'con')
+        if (!conversation) {
+            return res.status(404).json({ error: "Conversation not found." });
+        }
+        const dm = await prisma.message.deleteMany({
+            where: {
+                conversationId: conversation.id,
+            },
+        });
+        const dc = await prisma.conversation.delete({
+            where: {
+                id: conversation.id,
+            },
+        });
+
+        console.log(dm, dc)
+        res.status(200).json({ message: 'Conversation deleting successfully' });
+    } catch (error: any) {
+        console.log('Error in deleting conversations', error.message);
         return res.status(500).json({ error: 'Server error: ' + error.message });
     }
 }

@@ -26,7 +26,7 @@ const Header = ({ type }: headerProps) => {
               {selectedConversation?.fullName}
             </span>
           </div>
-          <MenuPopover />
+          <MenuPopover type="chat" />
         </div>
       ) : (
         <Link to={"/"}>

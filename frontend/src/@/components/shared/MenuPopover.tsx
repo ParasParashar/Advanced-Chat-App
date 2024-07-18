@@ -6,24 +6,37 @@ import useConversation from "../../../hooks/useConversation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FaSpinner } from "react-icons/fa";
 import LoadingSpinner from "../Loaders/LoadingSpinner";
+import { useNavigate } from "react-router-dom";
 
-const MenuPopover = () => {
+type props = {
+  type: "conversation" | "chat";
+  conversationId?: string;
+};
+
+const MenuPopover = ({ type, conversationId }: props) => {
   const { selectedConversation } = useConversation();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const getUrl = () => {
+    switch (type) {
+      case "conversation":
+        return `/api/messages/conversation/${conversationId}`;
+      case "chat":
+        return `/api/messages/conversation/chat/${selectedConversation?.id}`;
+      default:
+        return "/api";
+    }
+  };
+
+  const endPoint = getUrl();
+
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       try {
-        const { data } = await axios.delete(
-          `/api/messages/conversation/chat/${selectedConversation?.id}`
-        );
+        const { data } = await axios.delete(endPoint);
 
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        toast.success("Chat Cleared");
+        if (data.error) throw new Error(data.error || "deleting error");
         return data;
       } catch (error: any) {
         throw new Error(
@@ -31,10 +44,19 @@ const MenuPopover = () => {
         );
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["getMessage", selectedConversation?.id],
-      });
+    onSuccess: (data) => {
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["getMessage", selectedConversation?.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["conversations"],
+        }),
+      ]);
+      if (type == "conversation") {
+        navigate("/");
+      }
+      toast.success(data.message);
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -42,14 +64,20 @@ const MenuPopover = () => {
   });
 
   const handleSubmit = (e: React.FormEvent) => {
+    e.stopPropagation();
     e.preventDefault();
     mutate();
   };
 
   return (
     <Popover>
-      <PopoverTrigger>
-        <Button variant={"ghost"} size={"icon"}>
+      <PopoverTrigger
+        asChild
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+        }}
+      >
+        <Button variant={"ghost"} className="rounded-full" size={"icon"}>
           <CiMenuKebab size={20} />
         </Button>
       </PopoverTrigger>
@@ -59,14 +87,14 @@ const MenuPopover = () => {
           onClick={handleSubmit}
           size={"lg"}
           variant={"destructive"}
-          className="text-sm  group-hover:text-rose-800  group space-x-2"
+          className="text-sm   group-hover:text-rose-800  group space-x-2"
         >
           {isPending ? (
-            <LoadingSpinner size="sm" />
+            <LoadingSpinner size="sm text-black" />
           ) : (
             <MdDelete className="group-hover:text-rose-800" size={20} />
           )}
-          Clear Chat
+          {type === "chat" ? "   Clear Chat" : "Delete conversation"}
         </Button>
       </PopoverContent>
     </Popover>

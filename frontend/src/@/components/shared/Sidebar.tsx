@@ -32,7 +32,7 @@ export default function Sidebar() {
   });
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["conversations"],
     queryFn: async () => {
       try {
         const { data } = await axios.get("/api/messages/conversations");
@@ -49,7 +49,6 @@ export default function Sidebar() {
     e.preventDefault();
     mutate();
   };
-
   return (
     <aside className="bg-secondary w-full h-full  relative shadow-lg">
       <div className=" flex items-center gap-x-3 justify-between  w-full p-2 py-4  bg-sky-200 ">
@@ -69,7 +68,7 @@ export default function Sidebar() {
           Array.from({ length: 3 }, (_, index: number) => index).map(
             (_, i: number) => <UserSkeleton key={i} />
           )}
-        {!users && !isLoading && (
+        {users?.length === 0 && !isLoading && (
           <p className="text-center text-sm text-muted-foreground py-10">
             Currently&apos;s you don&apos;t have any past conversations
           </p>
@@ -78,10 +77,12 @@ export default function Sidebar() {
           users?.map((user: SidebarData) => (
             <SidebarItem
               key={user.id}
+              conversationId={user.id}
               id={user.participants.id}
               fullname={user.participants.fullname}
               lastMessage={user.message.body}
               profilePic={user.participants.profilePic}
+              type="sidebar"
             />
           ))}
       </div>
