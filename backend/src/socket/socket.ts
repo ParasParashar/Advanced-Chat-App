@@ -32,6 +32,16 @@ io.on('connection', (socket) => {
     // io.emit is used to send the message to all the connected clients
     io.emit('getOnlineUsers', Object.keys(userSocketMap));
 
+    // emit the typing message
+    socket.on('typing', (socketName) => {
+        socket.broadcast.emit('typing', socketName);
+
+    });
+
+    socket.on('stopTyping', () => {
+        socket.broadcast.emit('stopTyping');
+    });
+
     // socker.on is used to listen to the events. for both client and the server
     socket.on('disconnect', () => {
 

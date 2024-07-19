@@ -3,14 +3,33 @@ import useConversation from "../../../hooks/useConversation";
 import MobileSidebar from "./MobileSidebar";
 import MenuPopover from "./MenuPopover";
 import { useSocketContext } from "../providers/SocketProvider";
+import { useEffect, useState } from "react";
+import { cn } from "../../lib/utils";
 type headerProps = {
   type: "message" | "home";
 };
 
 const Header = ({ type }: headerProps) => {
   const { selectedConversation } = useConversation();
-  const { onlineUsers } = useSocketContext();
+  const { onlineUsers, socket } = useSocketContext();
   const isOnline = onlineUsers.includes(selectedConversation?.id as string);
+
+  const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    socket?.on("typing", () => {
+      setIsTyping(true);
+    });
+
+    socket?.on("stopTyping", () => {
+      setIsTyping(false);
+    });
+
+    return () => {
+      socket?.off("typing");
+      socket?.off("stopTyping");
+    };
+  }, [socket]);
 
   return (
     <header className="p-2 w-full h-16  flex items-center   gap-2  bg-gradient-to-r from-sky-50 to-indigo-200 shadow-lg">
@@ -19,7 +38,7 @@ const Header = ({ type }: headerProps) => {
       </div>
       {type === "message" ? (
         <div className="flex items-center px-2 w-full justify-between   gap-2">
-          <div className="flex items-center gap-x-2 ">
+          <div className="flex items-center   gap-x-2 ">
             <div className="relative  object-fill ">
               <img
                 src={selectedConversation?.profilePic}
@@ -30,9 +49,19 @@ const Header = ({ type }: headerProps) => {
                 <span className="absolute rounded-full p-1 top-1   right-1 text-blue-500 bg-blue-500" />
               )}
             </div>
-            <span className="text-lg md:text-xl font-sans  font-semibold ">
-              {selectedConversation?.fullName}
-            </span>
+            <div className="flex flex-col items-start justify-center ">
+              <p className="text-lg md:text-xl font-sans  font-semibold ">
+                {selectedConversation?.fullName}
+              </p>
+              <div
+                className={cn(
+                  "flex items-center w-5 p-0 h-5 transition-all duration-1000 ease-in-out  opacity-0",
+                  isTyping && "opacity-100 animate-pulse"
+                )}
+              >
+                <span className="text-[10px] p-0 ">Typing...</span>
+              </div>
+            </div>
           </div>
           <MenuPopover type="chat" />
         </div>
