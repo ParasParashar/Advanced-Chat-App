@@ -11,6 +11,6 @@
     "typeRoots": ["./node_modules/@types", "./types"],
     "types": ["node", "express", "bcryptjs", "cookie-parser", "jsonwebtoken"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+ "include": ["backend/src/**/*"], // Specifies which files to include when compiling your project.
+	"exclude": ["node_modules", "**/*.spec.ts", "frontend"] 
 }
