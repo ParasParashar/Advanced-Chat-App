@@ -17,7 +17,7 @@ const MessageCard = ({ message }: MessageProps) => {
     : "bg-gray-200 text-black rounded-bl-none";
 
   return (
-    <div className={`flex ${chatClass} mb-4`}>
+    <div className={`flex ${chatClass} mb-4 sidebar-animation`}>
       {!fromMe && (
         <div className=" w-6 h-6 sm:w-10 sm:h-10 rounded-full mr-2">
           <img alt="User Profile" src={img} className="rounded-full" />
