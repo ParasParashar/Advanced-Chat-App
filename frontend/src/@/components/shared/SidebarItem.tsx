@@ -45,7 +45,7 @@ const SidebarItem = ({
     <section
       onClick={handleClick}
       className={cn(
-        "flex sidebar-animation items-center cursor-pointer  duration-200 px-2 p-1  justify-between  transition-all ease-in-out w-full gap-2   bg-sky-50 hover:bg-sky-200/80",
+        "flex overflow-hidden  sidebar-animation items-center cursor-pointer  duration-200 px-2 p-1  justify-between  transition-all ease-in-out w-full gap-2   bg-sky-50 hover:bg-sky-200/80",
         isActive && " bg-blue-200/50"
       )}
     >

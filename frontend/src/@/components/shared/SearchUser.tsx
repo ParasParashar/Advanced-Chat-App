@@ -63,7 +63,7 @@ const SearchUser = () => {
       )}
       <div className="flex-1 overflow-y-auto overflow-hidden main-scrollbar">
         {data?.length > 0 && (
-          <ul className="flex flex-col overflow-y-auto transition-all duration-300 ease-in gap-2 mt-2">
+          <ul className="flex flex-col overflow-hidden transition-all duration-300 ease-in gap-2 mt-2">
             {data.map((user: User) => (
               <SidebarItem
                 key={user.id}
