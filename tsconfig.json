@@ -8,16 +8,6 @@
 		"strict": true, // Enable all strict type-checking options.
 		"esModuleInterop": true, // This will allow you to use default imports with CommonJS modules.
 		"skipLibCheck": true, // this option will skip type checking all .d.ts files.
-		"typeRoots": [
-			"./node_modules/@types"
-		],
-		"types": [
-			"node",
-			"express",
-			"bcryptjs",
-			"jsonwebtoken",
-			"cookie-parser"
-		]
 	},
 	"ts-node": {
 		"esm": true
