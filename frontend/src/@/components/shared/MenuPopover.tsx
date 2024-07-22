@@ -77,7 +77,11 @@ const MenuPopover = ({ type, conversationId }: props) => {
           e.stopPropagation();
         }}
       >
-        <Button variant={"ghost"} className="rounded-full" size={"icon"}>
+        <Button
+          variant={"ghost"}
+          className="rounded-full hover:bg-secondary w-7 h-7  rounded-full"
+          size={"icon"}
+        >
           <CiMenuKebab size={20} />
         </Button>
       </PopoverTrigger>

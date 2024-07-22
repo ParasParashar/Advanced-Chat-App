@@ -1,24 +1,28 @@
 {
 	"compilerOptions": {
-		"target": "ES2020", // Specifies what version of ECMAScript the code should be compiled to.
-		"module": "NodeNext", // Specifies what module code should be generated.
-		"moduleResolution": "NodeNext", // Specifies how TypeScript should resolve module imports.
-		"outDir": "./backend/dist", // Redirect output structure to the directory.
+		"target": "ES2020",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"outDir": "./backend/dist",
 		"rootDir": "./backend",
-		"strict": true, // Enable all strict type-checking options.
-		"esModuleInterop": true, // This will allow you to use default imports with CommonJS modules.
-		"skipLibCheck": true, // this option will skip type checking all .d.ts files.
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"typeRoots": [
+			"./node_modules/@types"
+		]
 	},
 	"ts-node": {
 		"esm": true
 	},
 	"include": [
-		"backend/src/**/*"
-	], // Specifies which files to include when compiling your project.
+		"backend/src/**/*",
+		"backend/src/declarations.d.ts"
+	],
 	"exclude": [
 		"node_modules",
 		"**/*.spec.ts",
 		"frontend",
 		"dist"
-	] // Specifies which files to exclude when compiling your project.
+	]
 }

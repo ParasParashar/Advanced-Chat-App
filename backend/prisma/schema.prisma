@@ -14,6 +14,11 @@ enum Gender {
   female
 }
 
+enum NotificationType {
+  message_seen
+  new_message
+}
+
 model User {
   id               String         @id @default(cuid())
   username         String         @unique
@@ -26,6 +31,7 @@ model User {
   conversationsIds String[]
   conversations    Conversation[]
   messages         Message[]
+  Notifications    Notification[]
 }
 
 model Conversation {
@@ -41,14 +47,24 @@ model Conversation {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  body      String
-
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  body           String
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  seenByIds      String[]
+  seen           Boolean      @default(false)
+}
 
-  senderId String
-  sender   User   @relation(fields: [senderId], references: [id])
+model Notification {
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  isRead    Boolean          @default(false)
 }

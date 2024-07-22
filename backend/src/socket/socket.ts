@@ -22,33 +22,39 @@ export const getReceiverSocketId = (receiverId: string) => {
 
 io.on('connection', (socket) => {
     console.log('socket is connected', socket.id);
-
     const userId = socket.handshake.query.userId as string;
-    // adding the socket id with the userId
 
-    if (userId) {
-        userSocketMap[userId] = socket.id;
-    };
+    // adding the socket id with the userId
+    if (userId) userSocketMap[userId] = socket.id;
+
     // io.emit is used to send the message to all the connected clients
     io.emit('getOnlineUsers', Object.keys(userSocketMap));
 
     // emit the typing message
-    socket.on('typing', (socketName) => {
-        socket.broadcast.emit('typing', socketName);
+    socket.on('typing', ({ senderId, receiverId }) => {
+        const receiverSocketId = getReceiverSocketId(receiverId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('typing', { senderId, receiverId })
+        }
 
     });
 
-    socket.on('stopTyping', () => {
-        socket.broadcast.emit('stopTyping');
+    socket.on('stopTyping', ({ senderId, receiverId }) => {
+        const receiverSocketId = getReceiverSocketId(receiverId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('stopTyping', { senderId, receiverId });
+        }
     });
 
     // socker.on is used to listen to the events. for both client and the server
     socket.on('disconnect', () => {
-
         console.log('user disconnected', socket.id);
-
-        delete userSocketMap[socket.id]; //deleting the connected socket
-
+        for (const [userId, socketId] of Object.entries(userSocketMap)) {
+            if (socketId === socket.id) {
+                delete userSocketMap[userId];
+                break;
+            }
+        }
         io.emit('getOnlineUsers', Object.keys(userSocketMap));
     });
 });

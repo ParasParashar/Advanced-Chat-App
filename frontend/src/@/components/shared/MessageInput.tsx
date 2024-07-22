@@ -7,8 +7,10 @@ import Emoji from "./Emoji";
 import { useSocketContext } from "../providers/SocketProvider";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "../../../types/type";
+import { useParams } from "react-router-dom";
 
 const MessageInput = () => {
+  const { id } = useParams();
   const { data: authUser } = useQuery<User>({ queryKey: ["authUser"] });
   const { socket } = useSocketContext();
   const [isTyping, setIsTyping] = useState(false);
@@ -32,7 +34,7 @@ const MessageInput = () => {
     if (message.trim() !== "") {
       mutate(message);
       setMessage("");
-      socket?.emit("stopTyping");
+      socket?.emit("stopTyping", { senderId: authUser?.id, receiverId: id });
     }
   };
   const handleEmojiClick = (emojiObject: any, e: React.MouseEvent) => {
@@ -44,11 +46,11 @@ const MessageInput = () => {
     setMessage(e.target.value);
     if (!isTyping) {
       setIsTyping(true);
-      socket?.emit("typing", { user: authUser?.fullname });
+      socket?.emit("typing", { senderId: authUser?.id, receiverId: id });
     }
     if (e.target.value === "") {
       setIsTyping(false);
-      socket?.emit("stopTyping");
+      socket?.emit("stopTyping", { senderId: authUser?.id, receiverId: id });
     }
   };
 
@@ -57,7 +59,7 @@ const MessageInput = () => {
     const timer = setTimeout(() => {
       if (isTyping) {
         setIsTyping(false);
-        socket?.emit("stopTyping");
+        socket?.emit("stopTyping", { senderId: authUser?.id, receiverId: id });
       }
     }, 1000);
 
@@ -67,9 +69,9 @@ const MessageInput = () => {
     <form
       onSubmit={handleSubmit}
       className="w-full  flex items-center justify-center 
-       border-sky-50 px-3 p-2 pb-1 gap-1 rounded-full
-       bg-gradient-to-l from-sky-50 to-indigo-200 
-       "
+        border-sky-50 px-3 p-2 pb-1 gap-1 rounded-full
+        bg-gradient-to-l from-sky-50 to-indigo-200 
+        "
     >
       <Emoji onEmojiClick={handleEmojiClick} />
       <Input

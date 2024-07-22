@@ -1,35 +1,18 @@
-import { LuLogOut } from "react-icons/lu";
 import SidebarItem from "./SidebarItem";
-import { Button } from "../ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { FaSpinner } from "react-icons/fa";
-import toast from "react-hot-toast";
 import { UserSkeleton } from "../Loaders/UserSkeleton";
 import { SidebarData } from "../../../types/type";
 import SearchModal from "./SearchModal";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { useSocketContext } from "../providers/SocketProvider";
+import SidebarFooter from "./SidebarFooter";
+import { Button } from "../ui/button";
 
 export default function Sidebar() {
+  const { socket } = useSocketContext();
   const queryClient = useQueryClient();
-  const { mutate, isPending } = useMutation({
-    mutationFn: async () => {
-      try {
-        const { data } = await axios.post("/api/auth/logout");
-        if (data.error) throw new Error(data.error);
-        return data;
-      } catch (error: any) {
-        throw new Error(error.message);
-      }
-    },
-    onSuccess: (data) => {
-      toast.success(data.message || "Logged out successfully");
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Logout failed");
-    },
-  });
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["conversations"],
@@ -45,12 +28,18 @@ export default function Sidebar() {
       }
     },
   });
-  const handleLogout = (e: React.FormEvent) => {
-    e.preventDefault();
-    mutate();
-  };
+
+  useEffect(() => {
+    socket?.on("new-message", () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    });
+    return () => {
+      socket?.off("new-message");
+    };
+  }, [socket]);
+
   return (
-    <aside className="bg-secondary w-full h-full  relative shadow-lg">
+    <aside className="bg-secondary w-full h-full  relative shadow-lg  overflow-hidden ">
       <div className=" flex items-center gap-x-3 justify-between  w-full p-2 py-4  bg-sky-200 ">
         <img
           src="/chatImage.png"
@@ -60,10 +49,16 @@ export default function Sidebar() {
         <Link to="/">
           <p className="text-2xl font-bold font-serif  text-center">CHAT APP</p>
         </Link>
-        <SearchModal />
       </div>
-      {/* <SearchUser /> */}
-      <div className="flex flex-col gap-2  ">
+      <Button
+        size={"icon2"}
+        className="rounded-full  absolute bottom-[7rem] right-[2rem] "
+      >
+        <SearchModal />
+      </Button>
+
+      {/* conversations */}
+      <div className="h-full flex-1  overflow-y-auto main-scrollbar">
         {isLoading &&
           Array.from({ length: 3 }, (_, index: number) => index).map(
             (_, i: number) => <UserSkeleton key={i} />
@@ -82,19 +77,14 @@ export default function Sidebar() {
               fullname={user.participants.fullname}
               lastMessage={user.message.body}
               profilePic={user.participants.profilePic}
+              isSeen={user.message.seen}
+              unseenMessages={user.unseenMesssages}
               type="sidebar"
             />
           ))}
       </div>
-      <Button
-        onClick={handleLogout}
-        size={"icon"}
-        variant={"ghost"}
-        className="  absolute  bottom-1 left-2 "
-      >
-        {isPending ? <FaSpinner size={10} /> : <LuLogOut size={20} />}
-        {/* Logout */}
-      </Button>
+      {/* footer */}
+      <SidebarFooter />
     </aside>
   );
 }

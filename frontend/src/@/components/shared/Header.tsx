@@ -13,23 +13,26 @@ const Header = ({ type }: headerProps) => {
   const { selectedConversation } = useConversation();
   const { onlineUsers, socket } = useSocketContext();
   const isOnline = onlineUsers.includes(selectedConversation?.id as string);
-
   const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
-    socket?.on("typing", () => {
-      setIsTyping(true);
+    socket?.on("typing", ({ senderId }) => {
+      if (selectedConversation?.id === senderId) {
+        setIsTyping(true);
+      }
     });
 
-    socket?.on("stopTyping", () => {
-      setIsTyping(false);
+    socket?.on("stopTyping", ({ senderId }) => {
+      if (selectedConversation?.id === senderId) {
+        setIsTyping(false);
+      }
     });
 
     return () => {
       socket?.off("typing");
       socket?.off("stopTyping");
     };
-  }, [socket]);
+  }, [selectedConversation?.id, socket, type, isOnline]);
 
   return (
     <header className="p-2 w-full h-16  flex items-center   gap-2  bg-gradient-to-r from-sky-50 to-indigo-200 shadow-lg">

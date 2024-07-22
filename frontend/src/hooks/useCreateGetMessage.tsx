@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { MessageType } from "./useConversation";
 import { useParams } from "react-router-dom";
+import { MessageType } from "../types/type";
 
 export const useCreateMessage = () => {
   const { id } = useParams();
