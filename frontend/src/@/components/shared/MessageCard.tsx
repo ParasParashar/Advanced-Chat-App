@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { User, MessageType } from "../../../types/type";
 import useConversation from "../../../hooks/useConversation";
 import { IoCheckmarkDoneOutline, IoCheckmarkDoneSharp } from "react-icons/io5";
+import { formatMessageDate } from "../../../utils/date";
 
 type MessageProps = {
   message: MessageType;
@@ -30,10 +31,7 @@ const MessageCard = ({ message }: MessageProps) => {
           {message.body}
         </p>
         <span className="opacity-50 text-[10px] flex gap-1 justify-between items-center">
-          {new Date(message.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {formatMessageDate(message.createdAt)}
           {fromMe && message.seen ? (
             <IoCheckmarkDoneSharp size={20} className="text-black/70" />
           ) : (

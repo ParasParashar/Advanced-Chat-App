@@ -1,13 +1,13 @@
-import LoadingSpinner from "../Loaders/LoadingSpinner";
 import MessageCard from "./MessageCard";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import useConversation from "../../../hooks/useConversation";
 import { useEffect, useRef } from "react";
-import { FaComments } from "react-icons/fa";
+import { FaComments, FaSpinner } from "react-icons/fa";
 import { useSocketContext } from "../providers/SocketProvider";
-import { MessageType, User } from "../../../types/type";
+import { MessageType, User, UserMessageType } from "../../../types/type";
+import { formatDayOnly } from "../../../utils/date";
 
 const MessagesContainer = () => {
   const { data: authUser } = useQuery<User>({ queryKey: ["authUser"] });
@@ -33,27 +33,33 @@ const MessagesContainer = () => {
     refetchInterval: 5000,
   });
 
-  //update message fumnction
+  // update message function
   const updateMessage = (updatedMessage: MessageType) => {
     queryClient.setQueryData(
       ["getMessage", id],
-      (oldData: MessageType[] | undefined) => {
+      (oldData: UserMessageType[]) => {
         if (oldData) {
-          const updatedMessages = oldData.map((msg) => {
-            if (msg.id === updatedMessage.id) {
-              return updatedMessage;
-            } else {
-              return msg;
+          return oldData.map((conversation) => {
+            if (
+              conversation.messages.some((msg) => msg.id === updatedMessage.id)
+            ) {
+              return {
+                ...conversation,
+                messages: conversation.messages.map((msg) =>
+                  msg.id === updatedMessage.id ? updatedMessage : msg
+                ),
+              };
             }
+            return conversation;
           });
-          return updatedMessages;
         }
-        return [updateMessage];
+        return [];
       }
     );
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
-  // updating the seen status
+
+  // mutation for updating the seen status
   const { mutate } = useMutation({
     mutationFn: async ({ messageId }: { messageId: string }) => {
       const res = await axios.patch(`/api/messages/update/${id}`, {
@@ -67,26 +73,12 @@ const MessagesContainer = () => {
     },
   });
 
-  const handleNewMessage = (newMessage: MessageType) => {
-    if (newMessage.senderId === authUser?.id || newMessage.senderId === id) {
-      queryClient.setQueryData(
-        ["getMessage", id],
-        (oldData: MessageType[] | undefined) => {
-          return oldData ? [...oldData, newMessage] : [newMessage];
-        }
-      );
-    }
-  };
-
   // for update message according to socket
   useEffect(() => {
     if (id && socket) {
-      socket.on("new-message", handleNewMessage);
       socket.on("updated-message", updateMessage);
 
-      // Clean up the event listener on unmount
       return () => {
-        socket.off("new-message", handleNewMessage);
         socket.off("updated-message", updateMessage);
       };
     }
@@ -151,18 +143,35 @@ const MessagesContainer = () => {
         </div>
       )}
       {!isPending &&
-        data.map((message: MessageType) => (
-          <div
-            key={message.id}
-            ref={(el) => el && observerRef.current.set(message.id, el)}
-            data-message-id={message.id}
-            data-sender-id={message.senderId}
-            data-message-seen={message.seen}
-          >
-            <MessageCard message={message} />
+        data.map((userMessages: UserMessageType) => (
+          <div key={userMessages.date}>
+            <div className="relative w-full z-10">
+              <div className="absolute top-[50%] flex justify-center items-center z-0 w-full h-[2px] rounded-full bg-gray-500/50" />
+              <div className=" flex justify-center z-[-10]">
+                <p className=" text-gray-700 bg-gradient-to-tr z-20 from-sky-100 to-slate-100 via-indigo-300 inline-block px-2 py-1 rounded-lg shadow-lg">
+                  {formatDayOnly(userMessages.date)}
+                </p>
+              </div>
+            </div>
+            {userMessages.messages.map((message: MessageType) => (
+              <div
+                key={message.id}
+                ref={(el) => el && observerRef.current.set(message.id, el)}
+                data-message-id={message.id}
+                data-sender-id={message.senderId}
+                data-message-seen={message.seen}
+                className="py-2"
+              >
+                <MessageCard message={message} />
+              </div>
+            ))}
           </div>
         ))}
-      {isPending && <LoadingSpinner size="sm" />}
+      {isPending && (
+        <div className=" w-full flex  justify-center ">
+          <FaSpinner className="animate-spin text-center " size="10" />
+        </div>
+      )}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import prisma from '../db/prisma.js';
 import { getReceiverSocketId, io } from "../socket/socket.js";
 
+
 export const sendMessageController = async (req: Request, res: Response) => {
     try {
         const { message } = req.body;
@@ -50,9 +51,7 @@ export const sendMessageController = async (req: Request, res: Response) => {
         }
         // adding socket io
         const receiverSocketId = getReceiverSocketId(receiverId);
-        const senderSocketId = getReceiverSocketId(receiverId);
         if (receiverSocketId) {
-            io.to(senderSocketId).emit('new-message', newMessage)
             io.to(receiverSocketId).emit('new-message', newMessage)
         }
         // also sending the response 
@@ -80,6 +79,14 @@ export const getMessageController = async (req: Request, res: Response) => {
                 messages: {
                     orderBy: {
                         createdAt: 'asc'
+                    },
+                    select: {
+                        id: true,
+                        createdAt: true,
+                        conversationId: true,
+                        body: true,
+                        seen: true,
+                        senderId: true
                     }
                 }
             }
@@ -88,7 +95,24 @@ export const getMessageController = async (req: Request, res: Response) => {
         if (!conversation) {
             return res.status(200).json([])
         };
-        res.status(200).json(conversation.messages)
+
+
+        const obj: any = {};
+        conversation.messages.forEach((item: any) => {
+            const date = new Date(item.createdAt).toDateString();
+            if (!obj[date]) {
+                obj[date] = [];
+            };
+            obj[date].push(item)
+        });
+
+        const data = Object.entries(obj).map(([date, messages]) => ({
+            date,
+            messages,
+        }));
+
+
+        res.status(200).json(data)
 
     } catch (error: any) {
         console.log('Error in getting user', error.message);

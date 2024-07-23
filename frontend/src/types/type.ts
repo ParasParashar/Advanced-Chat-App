@@ -14,6 +14,11 @@ export type MessageType = {
     conversationId?: string;
 };
 
+export type UserMessageType = {
+    date: string,
+    messages: MessageType[] | [],
+};
+
 export type SidebarData = {
     message: {
         body: string
