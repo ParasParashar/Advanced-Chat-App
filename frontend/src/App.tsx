@@ -7,6 +7,7 @@ import SignUpPage from "./@/components/pages/SignupPage";
 import { useQuery } from "@tanstack/react-query";
 import PageLoader from "./@/components/Loaders/PageLoader";
 import { User } from "./types/type";
+import GroupMessagePage from "./@/components/pages/GroupMessagePage";
 
 export default function App() {
   const { data: authUser, isLoading } = useQuery<User>({
@@ -49,6 +50,10 @@ export default function App() {
         <Route
           path="/messages/:id"
           element={authUser ? <MessagePage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/group/:id"
+          element={authUser ? <GroupMessagePage /> : <Navigate to="/login" />}
         />
       </Route>
     </Routes>

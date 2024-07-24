@@ -17,18 +17,6 @@ const MessageInput = () => {
   const [message, setMessage] = useState("");
   const { mutate, isPending } = useCreateMessage();
 
-  //       if (!res.data)
-  //         throw new Error(res.data.error || "error in sending message");
-  //       return res.data;
-  //     } catch (error: any) {
-  //       throw new Error(error.response.data.error);
-  //     }
-  //   },
-  //   onSuccess: () => {
-  //     setMessage("");
-  //     queryClient.invalidateQueries({ queryKey: ["createMessage"] });
-  //   },
-  // });
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() !== "") {

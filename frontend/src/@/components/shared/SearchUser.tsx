@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 import { Input } from "../ui/input";
-import { User } from "../../../types/type";
-import SidebarItem from "./SidebarItem";
+import { SearchCardType } from "../../../types/type";
 import { UserSkeleton } from "../Loaders/UserSkeleton";
+import SearchCard from "./SearchCard";
 
 const SearchUser = () => {
   const [query, setQuery] = useState("");
@@ -11,8 +11,8 @@ const SearchUser = () => {
 
   const fetchUsers = async (query: string) => {
     const endpoint = query
-      ? `/api/messages/users?query=${query}`
-      : `/api/messages/users`;
+      ? `/api/messages/searchuser?query=${query}`
+      : `/api/messages/searchuser`;
     try {
       const res = await fetch(endpoint);
       const data = await res.json();
@@ -43,6 +43,7 @@ const SearchUser = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
   };
+
   return (
     <div className="w-full h-full  relative bg-transparent border-gray-700">
       <div className="px-2 p-1 sticky">
@@ -64,14 +65,15 @@ const SearchUser = () => {
       <div className="flex-1 overflow-y-auto overflow-hidden main-scrollbar">
         {data?.length > 0 && (
           <ul className="flex flex-col overflow-hidden transition-all duration-300 ease-in gap-2 mt-2">
-            {data.map((user: User) => (
-              <SidebarItem
-                key={user.id}
-                id={user.id}
-                fullname={user.fullname}
-                profilePic={user.profilePic}
-                username={user.username}
-                type="search"
+            {data.map((data: SearchCardType) => (
+              <SearchCard
+                key={data.id}
+                type={data.type}
+                username={data?.username}
+                fullname={data?.fullname}
+                profilePic={data?.profilePic}
+                name={data?.name}
+                id={data.id}
               />
             ))}
           </ul>

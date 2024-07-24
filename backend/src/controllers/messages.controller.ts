@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from '../db/prisma.js';
 import { getReceiverSocketId, io } from "../socket/socket.js";
+import { group } from "console";
 
 
 export const sendMessageController = async (req: Request, res: Response) => {
@@ -23,6 +24,7 @@ export const sendMessageController = async (req: Request, res: Response) => {
                     participantsIds: {
                         set: [senderId, receiverId],
                     },
+                    isGroupChat: false,
                 },
             });
         }
@@ -71,6 +73,7 @@ export const getMessageController = async (req: Request, res: Response) => {
         const senderId = req.user.id;
         const conversation = await prisma.conversation.findFirst({
             where: {
+                isGroupChat: false,
                 participantsIds: {
                     hasEvery: [senderId, userToChatId]
                 }
@@ -95,7 +98,6 @@ export const getMessageController = async (req: Request, res: Response) => {
         if (!conversation) {
             return res.status(200).json([])
         };
-
 
         const obj: any = {};
         conversation.messages.forEach((item: any) => {
@@ -122,13 +124,18 @@ export const getMessageController = async (req: Request, res: Response) => {
 };
 
 // data for the sidebar
+
 export const getUserConversations = async (req: Request, res: Response) => {
     try {
-        let conversations = await prisma.conversation.findMany({
+        const userId = req.user.id;
+
+        // Fetching personal conversations
+        let personalConversations = await prisma.conversation.findMany({
             where: {
                 participantsIds: {
-                    has: req.user.id
-                }
+                    has: userId
+                },
+                isGroupChat: false
             },
             include: {
                 messages: {
@@ -141,13 +148,12 @@ export const getUserConversations = async (req: Request, res: Response) => {
                     },
                     orderBy: {
                         createdAt: 'desc'
-                    },
-                    // take: 1
+                    }
                 },
                 participants: {
                     where: {
                         id: {
-                            not: req.user.id
+                            not: userId
                         }
                     },
                     select: {
@@ -161,11 +167,36 @@ export const getUserConversations = async (req: Request, res: Response) => {
             orderBy: {
                 updatedAt: 'desc',
             }
+        });
 
+        // Fetching group conversations where the user is a member
+        let groupConversations = await prisma.group.findMany({
+            where: {
+                members: {
+                    some: {
+                        userId: userId
+                    }
+                },
+            },
+            include: {
+                messages: {
+                    select: {
+                        body: true,
+                        conversationId: true,
+                        createdAt: true,
+                        senderId: true,
+                        seen: true
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
+                    }
+                },
+            }
         });
 
 
-        conversations = await Promise.all(conversations.map(async (conversation: any) => {
+
+        personalConversations = await Promise.all(personalConversations.map(async (conversation: any) => {
             if (conversation.participantsIds.length > 0) {
                 conversation.participants = await prisma.user.findMany({
                     where: {
@@ -184,7 +215,8 @@ export const getUserConversations = async (req: Request, res: Response) => {
             return conversation;
         }));
 
-        const data = conversations.map((item: any) => {
+
+        const data = personalConversations.map((item: any) => {
             const unseenMessages = item.messages.reduce((acc: number, message: any) => {
                 if (message.seen === false && message.senderId !== req.user.id) {
                     return acc + 1;
@@ -195,16 +227,164 @@ export const getUserConversations = async (req: Request, res: Response) => {
                 message: item?.messages[0] ? item?.messages[0] : { body: "New Chat", createdAt: Date.now(), seen: false },
                 participants: item.participants[0],
                 id: item.id,
-                unseenMesssages: unseenMessages
+                unseenMesssages: unseenMessages,
+                type: 'user'
+
             }
-        }).sort((b: any, a: any) => a.message.createdAt - b.message.createdAt);
+        })
 
-        res.status(200).json(data)
+        const data2 = groupConversations.map((item: any) => {
+            const unseenMessages = item.messages.reduce((acc: number, message: any) => {
+                if (message.seen === false && message.senderId !== req.user.id) {
+                    return acc + 1;
+                }
+                return acc;
+            }, 0);
+            return {
+                message: item?.messages[0] ? item?.messages[0] : { body: "New group Chat", createdAt: Date.now(), seen: false },
+                participants: { id: item.id, fullname: item.name },
+                id: item.id,
+                unseenMesssages: unseenMessages,
+                type: 'group'
+            }
+
+        })
+        const result = [...data, ...data2].sort((b: any, a: any) => a.message.createdAt - b.message.createdAt);;
+        res.status(200).json(result);
     } catch (error: any) {
-        console.log('Error in getting user coversation', error.message);
-        return res.status(500).json({ error: 'Server error' + error.message });
+        console.log('Error in getting user conversations', error.message);
+        return res.status(500).json({ error: 'Server error: ' + error.message });
     }
+};
 
+
+
+// search user and group 
+export const getSearchUser = async (req: Request, res: Response) => {
+    try {
+        const query = req.query.query as string;
+
+        let users = [];
+        let groups = [];
+
+        if (query) {
+            users = await prisma.user.findMany({
+                where: {
+                    id: {
+                        not: req.user.id
+                    },
+                    OR: [
+                        {
+                            username: {
+                                contains: query,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            fullname: {
+                                contains: query,
+                                mode: 'insensitive'
+                            }
+                        }
+                    ]
+                },
+                take: 4,
+                select: {
+                    username: true,
+                    id: true,
+                    profilePic: true,
+                    fullname: true
+                }
+            });
+            groups = await prisma.group.findMany({
+                where: {
+                    AND: [
+                        {
+                            name: {
+                                contains: query,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            members: {
+                                some: {
+                                    userId: req.user.id
+                                }
+                            }
+                        }
+                    ]
+                },
+                take: 4,
+                select: {
+                    id: true,
+                    name: true,
+                    createdAt: true,
+                }
+            });
+        } else {
+            users = await prisma.user.findMany({
+                where: {
+                    id: {
+                        not: req.user.id
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                take: 3,
+                select: {
+                    username: true,
+                    id: true,
+                    profilePic: true,
+                    fullname: true
+                }
+            });
+            groups = await prisma.group.findMany({
+                where: {
+                    members: {
+                        some: {
+                            userId: req.user.id
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                take: 4,
+                select: {
+                    id: true,
+                    name: true,
+                    createdAt: true,
+                }
+            });
+        }
+
+
+
+
+        if (!users && !groups) {
+            return res.status(404).json({ error: 'No Search User or group found' })
+        }
+        const results = [
+            ...users.map(user => ({
+                type: 'user',
+                id: user.id,
+                username: user.username,
+                fullname: user.fullname,
+                profilePic: user.profilePic
+            })),
+            ...groups.map(group => ({
+                type: 'group',
+                id: group.id,
+                name: group.name,
+                createdAt: group.createdAt
+            }))
+        ];
+        res.status(200).json(results);
+    } catch (error: any) {
+        console.log('Error in getting search user or group in sidebar', error.message);
+        return res.status(500).json({ error: 'Server error: ' + error.message });
+    }
 };
 
 export const getUserforSidebar = async (req: Request, res: Response) => {

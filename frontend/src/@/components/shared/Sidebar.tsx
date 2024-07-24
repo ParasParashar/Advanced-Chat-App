@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { useSocketContext } from "../providers/SocketProvider";
 import SidebarFooter from "./SidebarFooter";
 import { Button } from "../ui/button";
+import CreateGroup from "./CreateGroup";
 
 export default function Sidebar() {
   const { socket } = useSocketContext();
@@ -49,6 +50,7 @@ export default function Sidebar() {
         <Link to="/">
           <p className="text-2xl font-bold font-serif  text-center">CHAT APP</p>
         </Link>
+        <CreateGroup />
       </div>
       <Button
         size={"icon2"}
@@ -68,6 +70,7 @@ export default function Sidebar() {
             Currently&apos;s you don&apos;t have any past conversations
           </p>
         )}
+
         {!isLoading &&
           users?.map((user: SidebarData) => (
             <SidebarItem
@@ -79,7 +82,7 @@ export default function Sidebar() {
               profilePic={user.participants.profilePic}
               isSeen={user.message.seen}
               unseenMessages={user.unseenMesssages}
-              type="sidebar"
+              type={user.type}
             />
           ))}
       </div>

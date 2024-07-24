@@ -20,18 +20,19 @@ enum NotificationType {
 }
 
 model User {
-  id               String         @id @default(cuid())
-  username         String         @unique
+  id               String            @id @default(cuid())
+  username         String            @unique
   fullname         String
   password         String
   gender           Gender
   profilePic       String
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   conversationsIds String[]
   conversations    Conversation[]
   messages         Message[]
   Notifications    Notification[]
+  groupMemberships GroupMembership[]
 }
 
 model Conversation {
@@ -44,6 +45,10 @@ model Conversation {
 
   messageIds String[]
   messages   Message[]
+
+  groupId     String?
+  group       Group?  @relation(fields: [groupId], references: [id])
+  isGroupChat Boolean @default(false)
 }
 
 model Message {
@@ -57,6 +62,29 @@ model Message {
   sender         User         @relation(fields: [senderId], references: [id])
   seenByIds      String[]
   seen           Boolean      @default(false)
+  groupId        String?
+  group          Group?       @relation(fields: [groupId], references: [id])
+}
+
+model Group {
+  id            String            @id @default(cuid())
+  name          String
+  messages      Message[]
+  conversations Conversation[]
+  members       GroupMembership[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model GroupMembership {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id])
+  isAdmin   Boolean  @default(false)
 }
 
 model Notification {

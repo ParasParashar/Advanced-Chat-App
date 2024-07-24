@@ -3,8 +3,9 @@ import { MessageType } from "../types/type";
 
 export type ConversationType = {
   id: string;
-  fullName: string;
-  profilePic: string;
+  fullName?: string;
+  profilePic?: string;
+  name?: string;
 };
 
 interface ConversationState {

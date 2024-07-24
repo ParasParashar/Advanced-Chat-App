@@ -1,9 +1,10 @@
 import express from 'express';
-import { deleteChatsController, deleteConversationController, getMessageController, getUserConversations, getUserforSidebar, sendMessageController, updateMessageController } from '../controllers/messages.controller.js';
+import { deleteChatsController, deleteConversationController, getMessageController, getSearchUser, getUserConversations, getUserforSidebar, sendMessageController, updateMessageController } from '../controllers/messages.controller.js';
 import protectRoute from '../middleware/protectRoute.js';
 const router = express.Router();
 
 router.get('/users', protectRoute, getUserforSidebar);
+router.get('/searchuser', protectRoute, getSearchUser);
 router.get('/conversations', protectRoute, getUserConversations);
 router.get('/:id', protectRoute, getMessageController);
 router.post('/send/:id', protectRoute, sendMessageController);
