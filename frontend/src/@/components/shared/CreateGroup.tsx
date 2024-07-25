@@ -1,7 +1,11 @@
-import { Button } from "../ui/button";
 import { GrGroup } from "react-icons/gr";
 
-import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTrigger,
+} from "../ui/dialog";
 import GroupCreation from "./GroupCreation";
 import { DialogTitle } from "@radix-ui/react-dialog";
 
@@ -9,18 +13,20 @@ const CreateGroup = () => {
   return (
     <Dialog>
       <DialogTrigger>
-        <Button
-          size={"icon"}
-          variant={"ghost"}
-          className="bg-indigo-600 hover:bg-indigo-50 hover:text-sky-800 rounded-full text-white transition-all duration-300 ease-in-out"
+        <div
+          className="bg-indigo-600 hover:bg-indigo-50 hover:text-sky-800 rounded-full text-white transition-all duration-300 ease-in-out w-10 h-10  flex
+           items-center  justify-center"
         >
           <GrGroup size={20} />
-        </Button>{" "}
+        </div>{" "}
       </DialogTrigger>
       <DialogContent className=" w-full overflow-y-auto main-scrollbar p-0 bg-sky-100">
         <DialogTitle className="text-muted-foreground text-xl text-center p-2">
-          Create Group
+          Let&apos;s Create Group
         </DialogTitle>
+        <DialogDescription className="p-0 text-center break-words">
+          Create a group and Start a group chat with the users.
+        </DialogDescription>
         <GroupCreation />
       </DialogContent>
     </Dialog>

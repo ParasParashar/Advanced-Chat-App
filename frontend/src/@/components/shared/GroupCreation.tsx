@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { UserSkeleton } from "../Loaders/UserSkeleton";
 import { Input } from "../ui/input";
@@ -8,6 +8,7 @@ import { IoIosRemoveCircle } from "react-icons/io";
 import { cn } from "../../lib/utils";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 type SelectUserType = {
   userId: string;
@@ -19,7 +20,9 @@ export default function GroupCreation() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectUser, setSelectUser] = useState<SelectUserType[]>([]);
+  const navigate = useNavigate();
   const groupInputRef = useRef<HTMLInputElement | null>(null);
+  const queryClient = useQueryClient();
 
   const fetchUsers = async (query: string) => {
     const endpoint = query
@@ -96,8 +99,10 @@ export default function GroupCreation() {
       if (res.data.error) throw new Error(res.data.error || "Server error");
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      navigate(`/group/${data.groupId}`);
       toast.success("Group created sucessfully");
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (error: any) => {
       toast.error(error.message);

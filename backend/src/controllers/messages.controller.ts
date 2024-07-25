@@ -228,8 +228,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
                 participants: item.participants[0],
                 id: item.id,
                 unseenMesssages: unseenMessages,
-                type: 'user'
-
+                type: 'user',
             }
         })
 
@@ -245,7 +244,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
                 participants: { id: item.id, fullname: item.name },
                 id: item.id,
                 unseenMesssages: unseenMessages,
-                type: 'group'
+                type: 'group',
             }
 
         })

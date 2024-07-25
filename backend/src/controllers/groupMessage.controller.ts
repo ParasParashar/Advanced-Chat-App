@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from '../db/prisma.js';
+import { io } from "../socket/socket.js";
 
 // creating message
 export const createGroupMessageController = async (req: Request, res: Response) => {
@@ -74,6 +75,8 @@ export const createGroupMessageController = async (req: Request, res: Response) 
                 }
             }
         });
+
+        io.to(groupId).emit('group-message', newMessage);
 
         res.status(200).json(newMessage)
 
@@ -196,7 +199,7 @@ export const createGroupController = async (req: Request, res: Response) => {
         );
 
 
-        res.status(200).json(group)
+        res.status(200).json({ groupId: group.id })
 
     } catch (error: any) {
         console.error(error.message, 'group creation error');
@@ -205,3 +208,60 @@ export const createGroupController = async (req: Request, res: Response) => {
     }
 
 }
+
+
+export const getGroupDataController = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params
+        const user = await prisma.group.findUnique({
+            where: { id: id }, select: {
+                id: true,
+                name: true,
+            }
+        });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({
+            id: user.id,
+            name: user.name,
+        });
+    } catch (error: any) {
+        console.log('Error in getting user Data', error.message);
+        res.status(500).json({ error: 'Server Error of getting the user' + error.message })
+    }
+}
+
+
+
+export const groupMessageUpdateController = async (req: Request, res: Response) => {
+    try {
+        const senderId = req.user.id;
+        const { messageId, groupId } = req.body;
+        const messagesToUpdate = await prisma.message.update({
+            where: {
+                id: messageId,
+                groupId: groupId,
+            },
+            data: {
+                seen: true,
+                seenByIds: [senderId]
+            },
+            select: {
+                id: true,
+                seen: true,
+                body: true,
+                senderId: true,
+                createdAt: true,
+                sender: true
+            },
+        });
+        io.to(groupId).emit('group-message-update', messagesToUpdate);
+
+        res.status(200).json(messagesToUpdate);
+    } catch (error: any) {
+        console.log('Error in updating group message seen ', error.message);
+        return res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+};
+

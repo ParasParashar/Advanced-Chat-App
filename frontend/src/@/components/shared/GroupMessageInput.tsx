@@ -2,19 +2,63 @@ import { BiSend } from "react-icons/bi";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import Emoji from "./Emoji";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCreateGroupMessage } from "../../../hooks/useCreateGroupMessage";
+import { useSocketContext } from "../providers/SocketProvider";
+import { useQuery } from "@tanstack/react-query";
+import { User } from "../../../types/type";
+import { useParams } from "react-router-dom";
 
 const GroupMessageInput = () => {
+  const { id: groupId } = useParams();
   const [message, setMessage] = useState("");
   const { mutate, isPending } = useCreateGroupMessage();
+  const [isTyping, setIsTyping] = useState(false);
+  const { socket } = useSocketContext();
+  const { data: authUser } = useQuery<User>({ queryKey: ["authUser"] });
+
+  // emiting socket event
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (isTyping) {
+        setIsTyping(false);
+        socket?.emit("stopGroupTyping", {
+          groupId: groupId,
+          senderName: authUser?.fullname,
+        });
+      }
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [message, isTyping]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
+    if (!isTyping) {
+      setIsTyping(true);
+      socket?.emit("groupTyping", {
+        groupId: groupId,
+        senderName: authUser?.fullname,
+      });
+    }
+    if (e.target.value === "") {
+      setIsTyping(false);
+      socket?.emit("stopGroupTyping", {
+        groupId: groupId,
+        senderName: authUser?.fullname,
+      });
+    }
   };
   const handleEmojiClick = (emojiObject: any, e: React.MouseEvent) => {
     e.stopPropagation();
+    socket?.emit("groupTyping", {
+      groupId: groupId,
+      senderName: authUser?.fullname,
+    });
     setMessage((prevMessage: string) => prevMessage + emojiObject.emoji);
+    socket?.emit("stopGroupTyping", {
+      groupId: groupId,
+      senderName: authUser?.fullname,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,6 +66,10 @@ const GroupMessageInput = () => {
     if (message.trim() !== "") {
       mutate(message);
       setMessage("");
+      socket?.emit("stopGroupTyping", {
+        groupId: groupId,
+        senderName: authUser?.fullname,
+      });
     }
   };
 

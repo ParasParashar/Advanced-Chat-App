@@ -34,8 +34,12 @@ export default function Sidebar() {
     socket?.on("new-message", () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
+    socket?.on("group-message", () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    });
     return () => {
       socket?.off("new-message");
+      socket?.off("group-message");
     };
   }, [socket]);
 
@@ -52,12 +56,9 @@ export default function Sidebar() {
         </Link>
         <CreateGroup />
       </div>
-      <Button
-        size={"icon2"}
-        className="rounded-full  absolute bottom-[7rem] right-[2rem] "
-      >
+      <div className="rounded-full  absolute bottom-[7rem] right-[2rem] ">
         <SearchModal />
-      </Button>
+      </div>
 
       {/* conversations */}
       <div className="h-full flex-1  overflow-y-auto main-scrollbar">

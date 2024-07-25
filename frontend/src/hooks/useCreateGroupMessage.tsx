@@ -7,14 +7,10 @@ import { useSocketContext } from "../@/components/providers/SocketProvider";
 
 export const useCreateGroupMessage = () => {
   const { id: groupId } = useParams();
-  //   const { data: authUser } = useQuery<User>({ queryKey: ["authUser"] });
   const queryClient = useQueryClient();
+  const { socket } = useSocketContext();
 
-  // updating ui function
   const handleUiUpdate = (data: GroupMessageT) => {
-    console.log(data, "og gthe receiver");
-
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
     queryClient.setQueryData(
       ["getGroupMessage", groupId],
       (oldConversations: GroupMessageType[] | undefined) => {
@@ -22,7 +18,6 @@ export const useCreateGroupMessage = () => {
         const messageDate = new Date(data.createdAt).toDateString();
 
         const updatedConversations = oldConversations.map((conversation) => {
-          console.log(conversation.date, "latedr ddat");
           if (conversation.date === messageDate) {
             return {
               ...conversation,
@@ -42,6 +37,7 @@ export const useCreateGroupMessage = () => {
         return updatedConversations;
       }
     );
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
   const { mutate, isPending } = useMutation({
@@ -52,8 +48,20 @@ export const useCreateGroupMessage = () => {
       if (!res.data) throw new Error("Error in sending message");
       return res.data;
     },
-    onSuccess: handleUiUpdate,
   });
+
+  useEffect(() => {
+    if (groupId && socket) {
+      socket.on("group-message", (newMessage) => {
+        console.log("socket message of the new message", newMessage);
+        handleUiUpdate(newMessage);
+      });
+
+      return () => {
+        socket.off("group-message", handleUiUpdate);
+      };
+    }
+  }, [groupId, queryClient, socket, mutate]);
 
   return {
     mutate,

@@ -47,8 +47,8 @@ export const useCreateMessage = () => {
       if (!res.data) throw new Error("Error in sending message");
       return res.data;
     },
-    onSuccess: handleUiUpdate,
   });
+
   const handleNewMessage = (newMessage: MessageType) => {
     if (newMessage.senderId === authUser?.id || newMessage.senderId === id) {
       handleUiUpdate(newMessage);
@@ -57,11 +57,9 @@ export const useCreateMessage = () => {
   useEffect(() => {
     if (id && socket) {
       socket.on("new-message", handleNewMessage);
-      // socket.on("updated-message", updateMessage);
 
       return () => {
         socket.off("new-message", handleNewMessage);
-        // socket.off("updated-message", updateMessage);
       };
     }
   }, [id, queryClient, mutate, socket]);

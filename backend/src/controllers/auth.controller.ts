@@ -119,3 +119,27 @@ export const getUserController = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Server Error ' + error.message })
     }
 }
+
+export const getUserDataController = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params
+        const user = await prisma.user.findUnique({
+            where: { id: id }, select: {
+                id: true,
+                fullname: true,
+                profilePic: true
+            }
+        });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({
+            id: user.id,
+            fullname: user.fullname,
+            profilePic: user.profilePic,
+        });
+    } catch (error: any) {
+        console.log('Error in getting user Data', error.message);
+        res.status(500).json({ error: 'Server Error of getting the user' + error.message })
+    }
+}

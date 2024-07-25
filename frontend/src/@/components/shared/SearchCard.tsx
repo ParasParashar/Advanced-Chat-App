@@ -26,10 +26,16 @@ export default function SearchCard({
       setSelectedConversation({
         id: id,
         name: name,
+        type: "group",
       });
       navigate(`/group/${id}`);
     } else {
-      setSelectedConversation({ id, fullName: fullname, profilePic });
+      setSelectedConversation({
+        id,
+        fullname: fullname,
+        profilePic,
+        type: "user",
+      });
       navigate(`/messages/${id}`);
     }
     onClose();

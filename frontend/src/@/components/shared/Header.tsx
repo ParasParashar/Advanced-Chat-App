@@ -52,13 +52,13 @@ const Header = ({ type }: headerProps) => {
                 <span className="absolute rounded-full p-1 top-1   right-1 text-blue-500 bg-blue-500" />
               )}
             </div>
-            <div className="flex flex-col items-start justify-center ">
+            <div className="flex flex-col items-start w-full justify-center ">
               <p className="text-lg md:text-xl font-sans  font-semibold ">
-                {selectedConversation?.fullName}
+                {selectedConversation?.fullname}
               </p>
               <div
                 className={cn(
-                  "flex items-center w-5 p-0 h-5 transition-all duration-1000 ease-in-out  opacity-0",
+                  "flex items-center w-full transition-all duration-1000 ease-in-out  opacity-0",
                   isTyping && "opacity-100 animate-pulse"
                 )}
               >

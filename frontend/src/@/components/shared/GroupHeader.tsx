@@ -1,10 +1,44 @@
+import { useEffect, useState } from "react";
 import useConversation from "../../../hooks/useConversation";
 import MenuPopover from "./MenuPopover";
 import MobileSidebar from "./MobileSidebar";
 import UserAvatar from "./UserAvatart";
+import { useSocketContext } from "../providers/SocketProvider";
+import { cn } from "../../lib/utils";
 
 export default function GroupHeader() {
   const { selectedConversation } = useConversation();
+  const { socket } = useSocketContext();
+  const [isTyping, setIsTyping] = useState({
+    isTyping: false,
+    senderName: "",
+  });
+
+  useEffect(() => {
+    socket?.on("groupTyping", ({ groupId, senderName }) => {
+      if (selectedConversation?.id === groupId) {
+        setIsTyping({
+          isTyping: true,
+          senderName: senderName,
+        });
+      }
+    });
+
+    socket?.on("stopGroupTyping", ({ groupId, senderName }) => {
+      if (selectedConversation?.id === groupId) {
+        setIsTyping({
+          isTyping: false,
+          senderName: senderName,
+        });
+      }
+    });
+
+    return () => {
+      socket?.off("groupTyping");
+      socket?.off("stopGroupTyping");
+    };
+  }, [isTyping, socket, selectedConversation?.id]);
+
   return (
     <header className="p-2 w-full h-16  flex items-center   gap-2  bg-gradient-to-r from-sky-50 to-indigo-200 shadow-lg">
       <div className="block lg:hidden ">
@@ -14,18 +48,20 @@ export default function GroupHeader() {
         <div className="flex items-center   gap-x-2 ">
           <UserAvatar type={"group"} name={selectedConversation?.name} />
 
-          <div className="flex flex-col items-start justify-center ">
+          <div className="flex flex-col items-start w-full justify-center ">
             <p className="text-lg md:text-xl font-sans  font-semibold ">
               {selectedConversation?.name}
             </p>
-            {/* <div
-                className={cn(
-                  "flex items-center w-5 p-0 h-5 transition-all duration-1000 ease-in-out  opacity-0",
-                  isTyping && "opacity-100 animate-pulse"
-                )}
-              >
-                <span className="text-[10px] p-0 ">Typing...</span>
-              </div> */}
+            <div
+              className={cn(
+                "flex items-center  w-full transition-all duration-1000 ease-in-out  opacity-0",
+                isTyping.isTyping && "opacity-100 animate-pulse"
+              )}
+            >
+              <span className="text-[10px] p-0 ">
+                {isTyping.senderName} is typing...
+              </span>
+            </div>
           </div>
         </div>
         <MenuPopover type="chat" />

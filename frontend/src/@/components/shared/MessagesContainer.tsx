@@ -82,7 +82,7 @@ const MessagesContainer = () => {
         socket.off("updated-message", updateMessage);
       };
     }
-  }, [id, queryClient, data, socket]);
+  }, [id, queryClient, data, socket, mutate]);
 
   // for scrolling
   useEffect(() => {

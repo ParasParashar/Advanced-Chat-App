@@ -34,35 +34,23 @@ const SidebarItem = ({
   const { setSelectedConversation, selectedConversation } = useConversation();
   const navigate = useNavigate();
 
-  const handleClick = () => {
-    if (type === "group") {
-      setSelectedConversation({
-        id: id,
-        name: fullname,
-      });
-      navigate(`/group/${id}`);
-    } else {
-      setSelectedConversation({ id, fullName: fullname, profilePic });
-      navigate(`/messages/${id}`);
-    }
-    onClose();
-  };
-
   const isActive = id === selectedConversation?.id;
   const isOnline = onlineUsers.includes(id);
-
-  const [isTyping, setIsTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState({
+    isTyping: false,
+    senderName: null,
+  });
 
   useEffect(() => {
     socket?.on("typing", ({ senderId }) => {
       if (id === senderId) {
-        setIsTyping(true);
+        setIsTyping((prev) => ({ ...prev, isTyping: true }));
       }
     });
 
     socket?.on("stopTyping", ({ senderId }) => {
       if (id === senderId) {
-        setIsTyping(false);
+        setIsTyping((prev) => ({ ...prev, isTyping: false }));
       }
     });
 
@@ -72,11 +60,51 @@ const SidebarItem = ({
     };
   }, [id, socket]);
 
+  useEffect(() => {
+    socket?.on("groupTyping", ({ groupId, senderName }) => {
+      if (id === groupId) {
+        setIsTyping({
+          isTyping: true,
+          senderName: senderName,
+        });
+      }
+    });
+
+    socket?.on("stopGroupTyping", ({ groupId }) => {
+      if (id === groupId) {
+        setIsTyping({
+          isTyping: false,
+          senderName: null,
+        });
+      }
+    });
+
+    return () => {
+      socket?.off("groupTyping");
+      socket?.off("stopGroupTyping");
+    };
+  }, [isTyping, id, socket]);
+
+  const handleClick = () => {
+    if (type === "group") {
+      setSelectedConversation({
+        id: id,
+        name: fullname,
+        type: "group",
+      });
+      navigate(`/group/${id}`);
+    } else {
+      setSelectedConversation({ id, fullname, profilePic, type: "user" });
+      navigate(`/messages/${id}`);
+    }
+    onClose();
+  };
+
   return (
     <section
       onClick={handleClick}
       className={`flex overflow-hidden cursor-pointer duration-200 px-4 py-2 justify-between items-center bg-gray-50 hover:bg-blue-100/60 transition-all ease-in-out w-full gap-2 sidebar-animation ${
-        isActive ? "bg-sky-100   shadow-inner" : ""
+        isActive ? "bg-sky-100 shadow-inner" : ""
       }`}
     >
       <div className="flex items-center justify-start w-full">
@@ -98,42 +126,42 @@ const SidebarItem = ({
         </div>
 
         <div className="flex flex-col w-full line-clamp-1">
-          <p className="text-md font-semibold text-gray-900">{fullname}</p>
-          {/* {type === "user" && lastMessage && ( */}
-          <p className="text-sm line-clamp-1 truncate">
-            {isTyping ? (
-              <div
+          <span className="text-md font-semibold text-gray-900">
+            {fullname}
+          </span>
+          <span className="text-sm line-clamp-1 truncate">
+            {isTyping.isTyping ? (
+              <span
                 className={`flex items-center transition-all duration-1000 ease-in-out opacity-0 ${
-                  isTyping ? "opacity-100 animate-pulse" : ""
+                  isTyping.isTyping ? "opacity-100 animate-pulse" : ""
                 }`}
               >
-                <span className="text-gray-500">Typing...</span>
-              </div>
+                <span className="text-gray-500">
+                  {type === "group"
+                    ? `${isTyping.senderName} typing...`
+                    : "Typing..."}
+                </span>
+              </span>
             ) : (
-              <p className="flex items-center justify-start gap-x-1 text-gray-500 line-clamp-1 w-full truncate">
+              <span className="flex items-center justify-start gap-x-1 text-gray-500 line-clamp-1 w-full truncate">
                 {isSeen ? (
                   <IoCheckmarkDoneSharp size={20} className="text-blue-500" />
                 ) : (
                   <IoCheckmarkDoneOutline size={20} />
                 )}
                 {lastMessage?.slice(0, 20) + "..."}
-              </p>
+              </span>
             )}
-          </p>
-          {/* )} */}
+          </span>
         </div>
       </div>
-      <div className=" mr-auto  transition-all duration-300 ease-in-out ">
+      <div className="mr-auto transition-all duration-300 ease-in-out">
         {unseenMessages !== 0 ? (
-          <Button
-            size={"icon"}
-            variant={"ghost"}
-            className="text-white hover:bg-transpairent hover:text-muted bg-sky-500/80 p-1 w-7 h-7  rounded-full  text-lg"
-          >
+          <Button className="text-white  hover:bg-sky-500/80 bg-sky-500/80 p-1 w-7 h-7 rounded-full text-lg text-center">
             {unseenMessages}
           </Button>
         ) : (
-          type === "group" && (
+          type === "user" && (
             <MenuPopover conversationId={conversationId} type="conversation" />
           )
         )}

@@ -4,9 +4,23 @@ import Header from "../shared/Header";
 import GroupHeader from "../shared/GroupHeader";
 import GroupMessageInput from "../shared/GroupMessageInput";
 import GroupMessageContainer from "../shared/GroupMessageContainer";
+import { useParams } from "react-router-dom";
+import { useSocketContext } from "../providers/SocketProvider";
+import { useEffect } from "react";
 
 export default function GroupMessagePage() {
   const { selectedConversation } = useConversation();
+  const { id: groupId } = useParams();
+  const { socket } = useSocketContext();
+  useEffect(() => {
+    if (groupId && socket) {
+      socket.emit("join-group", groupId);
+
+      return () => {
+        socket.emit("leave-group", groupId);
+      };
+    }
+  }, [groupId, socket]);
 
   return (
     <main

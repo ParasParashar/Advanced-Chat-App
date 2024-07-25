@@ -46,6 +46,25 @@ io.on('connection', (socket) => {
         }
     });
 
+    // emit the group typing message
+
+    socket.on('groupTyping', ({ groupId, senderName }) => {
+        io.emit('groupTyping', { groupId, senderName });
+    })
+    socket.on('stopGroupTyping', ({ groupId, senderName }) => {
+        io.emit('stopGroupTyping', { groupId, senderName });
+    })
+
+    // emit the group typing message
+    socket.on('join-group', (groupId) => {
+        socket.join(groupId);
+        console.log('user joind', groupId)
+    });
+    socket.on('leave-group', (groupId) => {
+        socket.leave(groupId);
+        console.log(`User left group: ${groupId}`);
+    });
+
     // socker.on is used to listen to the events. for both client and the server
     socket.on('disconnect', () => {
         console.log('user disconnected', socket.id);
