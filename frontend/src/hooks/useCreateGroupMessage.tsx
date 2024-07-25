@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { GroupMessageT, GroupMessageType } from "../types/type";
@@ -53,7 +53,6 @@ export const useCreateGroupMessage = () => {
   useEffect(() => {
     if (groupId && socket) {
       socket.on("group-message", (newMessage) => {
-        console.log("socket message of the new message", newMessage);
         handleUiUpdate(newMessage);
       });
 

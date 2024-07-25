@@ -2,16 +2,16 @@ import SidebarItem from "./SidebarItem";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { UserSkeleton } from "../Loaders/UserSkeleton";
-import { SidebarData } from "../../../types/type";
+import { SidebarData, User } from "../../../types/type";
 import SearchModal from "./SearchModal";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useSocketContext } from "../providers/SocketProvider";
 import SidebarFooter from "./SidebarFooter";
-import { Button } from "../ui/button";
 import CreateGroup from "./CreateGroup";
 
 export default function Sidebar() {
+  const { data: authUser } = useQuery<User>({ queryKey: ["authUser"] });
   const { socket } = useSocketContext();
   const queryClient = useQueryClient();
 
@@ -73,19 +73,32 @@ export default function Sidebar() {
         )}
 
         {!isLoading &&
-          users?.map((user: SidebarData) => (
-            <SidebarItem
-              key={user.id}
-              conversationId={user.id}
-              id={user.participants.id}
-              fullname={user.participants.fullname}
-              lastMessage={user.message.body}
-              profilePic={user.participants.profilePic}
-              isSeen={user.message.seen}
-              unseenMessages={user.unseenMesssages}
-              type={user.type}
-            />
-          ))}
+          users?.map((user: SidebarData) => {
+            console.log(user.message.seenByIds, "message");
+            console.log(
+              user.message.seenByIds?.includes(authUser?.id as string),
+              "message"
+            );
+            console.log(user.unseenMesssages, "data of the unseen messages");
+            return (
+              <SidebarItem
+                key={user.id}
+                conversationId={user.id}
+                id={user.participants.id}
+                fullname={user.participants.fullname}
+                lastMessage={user.message.body}
+                profilePic={user.participants.profilePic}
+                isSeen={
+                  user.message.seenByIds?.includes(
+                    authUser?.id as string
+                  ) as boolean
+                }
+                // isSeen={user.message.seen}
+                unseenMessages={user.unseenMesssages}
+                type={user.type}
+              />
+            );
+          })}
       </div>
       {/* footer */}
       <SidebarFooter />

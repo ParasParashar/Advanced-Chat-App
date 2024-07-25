@@ -21,7 +21,8 @@ export type GroupMessageT = {
     seen: boolean;
     createdAt: string;
     conversationId?: string;
-    sender: User
+    sender: User;
+    seenByIds?: string[];
 }
 
 export type UserMessageType = {
@@ -34,6 +35,7 @@ export type SidebarData = {
         body: string
         conversationId: string
         seen: boolean
+        seenByIds?: string[]
     },
     participants: User,
     id: string,

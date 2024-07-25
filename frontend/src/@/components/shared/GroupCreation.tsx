@@ -9,6 +9,7 @@ import { cn } from "../../lib/utils";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import useSidebarHook from "../../../hooks/useSidebarHook";
 
 type SelectUserType = {
   userId: string;
@@ -20,6 +21,7 @@ export default function GroupCreation() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectUser, setSelectUser] = useState<SelectUserType[]>([]);
+  const { onClose } = useSidebarHook();
   const navigate = useNavigate();
   const groupInputRef = useRef<HTMLInputElement | null>(null);
   const queryClient = useQueryClient();
@@ -102,6 +104,7 @@ export default function GroupCreation() {
     onSuccess: (data) => {
       navigate(`/group/${data.groupId}`);
       toast.success("Group created sucessfully");
+      onClose();
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (error: any) => {

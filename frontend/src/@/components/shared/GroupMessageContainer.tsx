@@ -30,7 +30,7 @@ const GroupMessageContainer = () => {
         throw new Error(err.message);
       }
     },
-    // refetchInterval: 5000,
+    refetchInterval: 5000,
   });
 
   // update ui function
@@ -89,7 +89,8 @@ const GroupMessageContainer = () => {
         entries.forEach((entry: IntersectionObserverEntry) => {
           if (entry.isIntersecting) {
             const messageSeen = entry.target.getAttribute("data-message-seen");
-            if (messageSeen === "true") return;
+            console.log("message seen value", messageSeen);
+            // if (messageSeen === "true") return;
             const messageId = entry.target.getAttribute("data-message-id");
             const senderId = entry.target.getAttribute("data-sender-id");
             if (messageId && senderId !== authUser?.id) {
@@ -124,7 +125,7 @@ const GroupMessageContainer = () => {
   return (
     <div
       ref={messageRef}
-      className="h-full flex flex-col gap-2 overflow-y-auto p-3 main-scrollbar"
+      className="h-full flex flex-col gap-2 overflow-y-auto p-1 px-3  main-scrollbar"
     >
       {data?.length === 0 && (
         <div className="flex flex-col items-center justify-center p-8 mx-auto my-auto text-center bg-indigo-100 bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-30 rounded-lg shadow-md">
@@ -152,7 +153,9 @@ const GroupMessageContainer = () => {
                 ref={(el) => el && observerRef.current.set(message.id, el)}
                 data-message-id={message.id}
                 data-sender-id={message.senderId}
-                data-message-seen={message.seen}
+                data-message-seen={message.seenByIds?.includes(
+                  authUser?.id as string
+                )}
                 className="py-2"
               >
                 <GroupMessageCard message={message} />

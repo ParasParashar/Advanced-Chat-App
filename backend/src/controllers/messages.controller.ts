@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import prisma from '../db/prisma.js';
 import { getReceiverSocketId, io } from "../socket/socket.js";
-import { group } from "console";
 
 
 export const sendMessageController = async (req: Request, res: Response) => {
@@ -34,6 +33,7 @@ export const sendMessageController = async (req: Request, res: Response) => {
                 senderId: senderId,
                 body: message,
                 conversationId: conversation.id,
+                seenByIds: [senderId]
             },
         });
         if (newMessage) {
@@ -53,8 +53,11 @@ export const sendMessageController = async (req: Request, res: Response) => {
         }
         // adding socket io
         const receiverSocketId = getReceiverSocketId(receiverId);
+        const senderSocketId = getReceiverSocketId(senderId);
+
         if (receiverSocketId) {
             io.to(receiverSocketId).emit('new-message', newMessage)
+            io.to(senderSocketId).emit('new-message', newMessage)
         }
         // also sending the response 
 
@@ -144,7 +147,8 @@ export const getUserConversations = async (req: Request, res: Response) => {
                         conversationId: true,
                         createdAt: true,
                         senderId: true,
-                        seen: true
+                        seen: true,
+                        seenByIds: true,
                     },
                     orderBy: {
                         createdAt: 'desc'
@@ -185,11 +189,12 @@ export const getUserConversations = async (req: Request, res: Response) => {
                         conversationId: true,
                         createdAt: true,
                         senderId: true,
-                        seen: true
+                        seen: true,
+                        seenByIds: true,
                     },
                     orderBy: {
                         createdAt: 'desc'
-                    }
+                    },
                 },
             }
         });
@@ -218,7 +223,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
 
         const data = personalConversations.map((item: any) => {
             const unseenMessages = item.messages.reduce((acc: number, message: any) => {
-                if (message.seen === false && message.senderId !== req.user.id) {
+                if (message.seen === 'false' && message.senderId !== req.user.id) {
                     return acc + 1;
                 }
                 return acc;
@@ -234,7 +239,8 @@ export const getUserConversations = async (req: Request, res: Response) => {
 
         const data2 = groupConversations.map((item: any) => {
             const unseenMessages = item.messages.reduce((acc: number, message: any) => {
-                if (message.seen === false && message.senderId !== req.user.id) {
+                const isUserSeenMsg = message.seenByIds?.includes(userId);
+                if (!isUserSeenMsg && message.senderId !== req.user.id) {
                     return acc + 1;
                 }
                 return acc;
@@ -522,7 +528,7 @@ export const updateMessageController = async (req: Request, res: Response) => {
             },
             data: {
                 seen: true,
-                seenByIds: [senderId, receiverId]
+                seenByIds: [receiverId]
             },
             select: {
                 id: true,
@@ -533,8 +539,11 @@ export const updateMessageController = async (req: Request, res: Response) => {
             }
         });
         const receiverSocketId = getReceiverSocketId(receiverId);
+        const senderSocketId = getReceiverSocketId(senderId);
+
         if (receiverSocketId) {
             io.to(receiverSocketId).emit('updated-message', messagesToUpdate)
+            io.to(senderSocketId).emit('updated-message', messagesToUpdate)
         };
         res.status(200).json(messagesToUpdate);
     } catch (error: any) {

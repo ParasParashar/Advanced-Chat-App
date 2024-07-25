@@ -129,24 +129,24 @@ const MessagesContainer = () => {
   }, [authUser?.id, mutate, selectedConversation?.id, data, id]);
 
   return (
-    <div
+    <main
       ref={messageRef}
-      className="h-full flex flex-col gap-2 overflow-y-auto p-3 main-scrollbar"
+      className="h-full flex flex-col gap-2 overflow-y-auto  p-1 px-3 main-scrollbar"
     >
       {data?.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-8 mx-auto my-auto text-center bg-indigo-100 bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-30 rounded-lg shadow-md">
+        <div className="flex flex-col  items-center justify-center p-8 mx-auto my-auto text-center bg-indigo-100 bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-30 rounded-lg shadow-md">
           <FaComments className="text-blue-500 text-6xl mb-4" />
           <h3 className="text-3xl font-serif text-gray-500">
             Currently you don&apos;t have any previous conversations with{" "}
-            {selectedConversation?.fullName}.
+            {selectedConversation?.fullname}.
           </h3>
         </div>
       )}
       {!isPending &&
         data.map((userMessages: UserMessageType) => (
           <div key={userMessages.date}>
-            <div className="relative w-full z-10">
-              <div className="absolute top-[50%] flex justify-center items-center z-0 w-full h-[2px] rounded-full bg-gray-500/50" />
+            <div className="relative  z-10  ">
+              <div className="absolute top-[50%]  flex justify-center items-center z-0 w-full h-[2px] rounded-full     bg bg-gradient-to-tl  from-gray-500/50  via-slate-600/20  to-blue-500/50" />
               <div className=" flex justify-center z-[-10]">
                 <p className=" text-gray-700 bg-gradient-to-tr z-20 from-sky-100 to-slate-100 via-indigo-300 inline-block px-2 py-1 rounded-lg shadow-lg">
                   {formatDayOnly(userMessages.date)}
@@ -172,7 +172,7 @@ const MessagesContainer = () => {
           <FaSpinner className="animate-spin text-center " size="10" />
         </div>
       )}
-    </div>
+    </main>
   );
 };
 

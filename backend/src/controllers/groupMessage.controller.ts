@@ -49,7 +49,8 @@ export const createGroupMessageController = async (req: Request, res: Response) 
                 senderId: senderId,
                 body: message,
                 groupId: groupId,
-                conversationId: conversation.id
+                conversationId: conversation.id,
+                seenByIds: [senderId],
             },
             include: {
                 sender: {
@@ -107,6 +108,7 @@ export const getGroupMessageController = async (req: Request, res: Response) => 
                         body: true,
                         seen: true,
                         senderId: true,
+                        seenByIds: true,
                         sender: {
                             select: {
                                 username: true,
@@ -236,16 +238,51 @@ export const getGroupDataController = async (req: Request, res: Response) => {
 
 export const groupMessageUpdateController = async (req: Request, res: Response) => {
     try {
-        const senderId = req.user.id;
+        const userId = req.user.id;
         const { messageId, groupId } = req.body;
-        const messagesToUpdate = await prisma.message.update({
+
+        const group = await prisma.group.findUnique({
+            where: {
+                id: groupId
+            }
+            ,
+            include: {
+                members: {
+                    select: {
+                        userId: true
+                    }
+                }
+            }
+        });
+        if (!group) {
+            return res.status(200).json({ error: 'Group not found' });
+        };
+
+        const message = await prisma.message.findFirst({
             where: {
                 id: messageId,
                 groupId: groupId,
             },
+            select: {
+                seenByIds: true,
+            }
+        });
+
+        if (!message) {
+            return res.status(404).json({ error: 'Message not found' });
+        }
+
+        // checking and determine if the message should be marked as seen
+        const allMembersSeen = group.members.every(member => message.seenByIds.includes(member.userId) || member.userId === userId);
+        const messagesToUpdate = await prisma.message.update({
+            where: {
+                id: messageId,
+            },
             data: {
-                seen: true,
-                seenByIds: [senderId]
+                seen: allMembersSeen,
+                seenByIds: {
+                    set: message.seenByIds.includes(userId) ? message.seenByIds : [...message.seenByIds, userId]
+                }
             },
             select: {
                 id: true,
@@ -253,7 +290,14 @@ export const groupMessageUpdateController = async (req: Request, res: Response) 
                 body: true,
                 senderId: true,
                 createdAt: true,
-                sender: true
+                seenByIds: true,
+                sender: {
+                    select: {
+                        id: true,
+                        fullname: true,
+                        profilePic: true,
+                    }
+                }
             },
         });
         io.to(groupId).emit('group-message-update', messagesToUpdate);
