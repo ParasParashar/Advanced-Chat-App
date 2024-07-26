@@ -33,8 +33,26 @@ export const sendMessageController = async (req: Request, res: Response) => {
                 senderId: senderId,
                 body: message,
                 conversationId: conversation.id,
-                seenByIds: [senderId]
+                seenByIds: [senderId],
             },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        fullname: true,
+                        profilePic: true,
+                        username: true,
+                    }
+                }
+            }
+        });
+        const receiver = await prisma.user.findUnique({
+            where: { id: receiverId }, select: {
+                id: true,
+                fullname: true,
+                profilePic: true,
+                username: true,
+            }
         });
         if (newMessage) {
             conversation = await prisma.conversation.update({
@@ -51,17 +69,18 @@ export const sendMessageController = async (req: Request, res: Response) => {
             });
 
         }
+        const sendMessage = { ...newMessage, receiver }
         // adding socket io
         const receiverSocketId = getReceiverSocketId(receiverId);
         const senderSocketId = getReceiverSocketId(senderId);
 
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit('new-message', newMessage)
-            io.to(senderSocketId).emit('new-message', newMessage)
+        if (receiverSocketId && senderSocketId) {
+            io.to(senderSocketId).emit('new-message', sendMessage)
+            io.to(receiverSocketId).emit('new-message', sendMessage)
         }
         // also sending the response 
 
-        return res.status(200).json(newMessage)
+        return res.status(200).json(sendMessage)
 
     } catch (error: any) {
         console.log('Send user message error', error.message);
@@ -223,7 +242,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
 
         const data = personalConversations.map((item: any) => {
             const unseenMessages = item.messages.reduce((acc: number, message: any) => {
-                if (message.seen === 'false' && message.senderId !== req.user.id) {
+                if (message.seen === false && message.senderId !== req.user.id) {
                     return acc + 1;
                 }
                 return acc;
@@ -255,6 +274,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
 
         })
         const result = [...data, ...data2].sort((b: any, a: any) => a.message.createdAt - b.message.createdAt);;
+
         res.status(200).json(result);
     } catch (error: any) {
         console.log('Error in getting user conversations', error.message);
@@ -535,7 +555,8 @@ export const updateMessageController = async (req: Request, res: Response) => {
                 seen: true,
                 body: true,
                 senderId: true,
-                createdAt: true
+                createdAt: true,
+                conversationId: true,
             }
         });
         const receiverSocketId = getReceiverSocketId(receiverId);

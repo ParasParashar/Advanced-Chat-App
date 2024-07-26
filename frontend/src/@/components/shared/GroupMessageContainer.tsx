@@ -89,8 +89,7 @@ const GroupMessageContainer = () => {
         entries.forEach((entry: IntersectionObserverEntry) => {
           if (entry.isIntersecting) {
             const messageSeen = entry.target.getAttribute("data-message-seen");
-            console.log("message seen value", messageSeen);
-            // if (messageSeen === "true") return;
+            if (messageSeen === "true") return;
             const messageId = entry.target.getAttribute("data-message-id");
             const senderId = entry.target.getAttribute("data-sender-id");
             if (messageId && senderId !== authUser?.id) {

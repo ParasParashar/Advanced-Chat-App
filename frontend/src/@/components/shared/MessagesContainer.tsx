@@ -6,7 +6,12 @@ import useConversation from "../../../hooks/useConversation";
 import { useEffect, useRef } from "react";
 import { FaComments, FaSpinner } from "react-icons/fa";
 import { useSocketContext } from "../providers/SocketProvider";
-import { MessageType, User, UserMessageType } from "../../../types/type";
+import {
+  MessageType,
+  SidebarData,
+  User,
+  UserMessageType,
+} from "../../../types/type";
 import { formatDayOnly } from "../../../utils/date";
 
 const MessagesContainer = () => {
@@ -30,11 +35,11 @@ const MessagesContainer = () => {
         throw new Error(err.message);
       }
     },
-    refetchInterval: 5000,
+    refetchInterval: 8000,
   });
 
   // update message function
-  const updateMessage = (updatedMessage: MessageType) => {
+  const messageUpdate = (updatedMessage: MessageType) => {
     queryClient.setQueryData(
       ["getMessage", id],
       (oldData: UserMessageType[]) => {
@@ -56,7 +61,24 @@ const MessagesContainer = () => {
         return [];
       }
     );
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    // update the sidebar conversations
+    queryClient.setQueryData(
+      ["conversations"],
+      (oldConversations: SidebarData[]) => {
+        if (!oldConversations) {
+          return oldConversations;
+        }
+        return oldConversations.map((conversation: SidebarData) => {
+          if (conversation.id === updatedMessage.conversationId) {
+            return {
+              ...conversation,
+              unseenMesssages: 0,
+            };
+          }
+          return conversation;
+        });
+      }
+    );
   };
 
   // mutation for updating the seen status
@@ -68,18 +90,15 @@ const MessagesContainer = () => {
       if (res.data.error) throw new Error(res.data.error);
       return res.data;
     },
-    onSuccess: (data) => {
-      updateMessage(data);
-    },
   });
 
   // for update message according to socket
   useEffect(() => {
     if (id && socket) {
-      socket.on("updated-message", updateMessage);
+      socket.on("updated-message", messageUpdate);
 
       return () => {
-        socket.off("updated-message", updateMessage);
+        socket.off("updated-message");
       };
     }
   }, [id, queryClient, data, socket, mutate]);

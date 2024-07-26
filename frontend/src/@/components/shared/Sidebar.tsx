@@ -2,7 +2,7 @@ import SidebarItem from "./SidebarItem";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { UserSkeleton } from "../Loaders/UserSkeleton";
-import { SidebarData, User } from "../../../types/type";
+import { MessageType, SidebarData, User } from "../../../types/type";
 import SearchModal from "./SearchModal";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
@@ -29,11 +29,67 @@ export default function Sidebar() {
       }
     },
   });
-
   useEffect(() => {
-    socket?.on("new-message", () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    socket?.on("new-message", (data: MessageType) => {
+      queryClient.setQueryData(
+        ["conversations"],
+        (oldConversations: SidebarData[]) => {
+          const updatedCon = oldConversations.map(
+            (conversation: SidebarData) => {
+              if (conversation.id === data.conversationId) {
+                return {
+                  ...conversation,
+                  message: {
+                    body: data.body,
+                    conversationId: data.conversationId,
+                    seen: data.seen,
+                  },
+                  unseenMesssages:
+                    authUser?.id === data.senderId
+                      ? conversation.unseenMesssages
+                      : conversation.unseenMesssages + 1,
+                };
+              }
+              return conversation;
+            }
+          );
+          if (
+            !updatedCon.some(
+              (conversation) => conversation.id === data.conversationId
+            )
+          ) {
+            const senderSide = {
+              id: data.receiver?.id as string,
+              fullname: data.receiver?.fullname as string,
+              profilePic: data.receiver?.profilePic as string,
+              username: data.receiver?.username as string,
+            };
+
+            const receiverSide = {
+              id: data.sender?.id as string,
+              fullname: data.sender?.fullname as string,
+              profilePic: data.sender?.profilePic as string,
+              username: data.sender?.username as string,
+            };
+
+            updatedCon.push({
+              id: data.conversationId as string,
+              message: {
+                body: data.body,
+                conversationId: data.conversationId as string,
+                seen: data.seen,
+              },
+              participants:
+                authUser?.id !== data.senderId ? receiverSide : senderSide,
+              type: "user",
+              unseenMesssages: authUser?.id === data.senderId ? 0 : 1,
+            });
+          }
+          return updatedCon;
+        }
+      );
     });
+
     socket?.on("group-message", () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
@@ -41,11 +97,11 @@ export default function Sidebar() {
       socket?.off("new-message");
       socket?.off("group-message");
     };
-  }, [socket]);
+  }, [socket, queryClient]);
 
   return (
     <aside className="bg-secondary w-full h-full  relative shadow-lg  overflow-hidden ">
-      <div className=" flex items-center gap-x-3 justify-between  w-full p-2 py-4  bg-sky-200 ">
+      <div className=" flex items-center gap-x-3 justify-around  w-full p-2 py-4  bg-sky-200 ">
         <img
           src="/chatImage.png"
           alt="Logo"
@@ -73,32 +129,23 @@ export default function Sidebar() {
         )}
 
         {!isLoading &&
-          users?.map((user: SidebarData) => {
-            console.log(user.message.seenByIds, "message");
-            console.log(
-              user.message.seenByIds?.includes(authUser?.id as string),
-              "message"
-            );
-            console.log(user.unseenMesssages, "data of the unseen messages");
-            return (
-              <SidebarItem
-                key={user.id}
-                conversationId={user.id}
-                id={user.participants.id}
-                fullname={user.participants.fullname}
-                lastMessage={user.message.body}
-                profilePic={user.participants.profilePic}
-                isSeen={
-                  user.message.seenByIds?.includes(
-                    authUser?.id as string
-                  ) as boolean
-                }
-                // isSeen={user.message.seen}
-                unseenMessages={user.unseenMesssages}
-                type={user.type}
-              />
-            );
-          })}
+          users?.map((user: SidebarData) => (
+            <SidebarItem
+              key={user.id}
+              conversationId={user.id}
+              id={user.participants.id}
+              fullname={user.participants.fullname}
+              lastMessage={user.message.body}
+              profilePic={user.participants.profilePic}
+              isSeen={
+                user.message.seenByIds?.includes(
+                  authUser?.id as string
+                ) as boolean
+              }
+              unseenMessages={user.unseenMesssages}
+              type={user.type}
+            />
+          ))}
       </div>
       {/* footer */}
       <SidebarFooter />

@@ -57,7 +57,7 @@ export const useCreateGroupMessage = () => {
       });
 
       return () => {
-        socket.off("group-message", handleUiUpdate);
+        socket.off("group-message");
       };
     }
   }, [groupId, queryClient, socket, mutate]);

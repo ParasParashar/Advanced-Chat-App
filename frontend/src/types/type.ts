@@ -12,6 +12,8 @@ export type MessageType = {
     seen: boolean;
     createdAt: string;
     conversationId?: string;
+    receiver?: User
+    sender?: User
 };
 
 export type GroupMessageT = {
