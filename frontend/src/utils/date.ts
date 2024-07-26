@@ -29,3 +29,10 @@ export const formatMessageDate = (date: string) => {
         minute: "2-digit",
     })
 }
+export const formatGroupDate = (date: string) => {
+    return new Date(date).toLocaleDateString([], {
+        day: "2-digit",
+        month: "short",
+        year: 'numeric'
+    });
+}

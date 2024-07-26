@@ -234,6 +234,41 @@ export const getGroupDataController = async (req: Request, res: Response) => {
     }
 }
 
+// getting the group info with the members
+export const getGroupInfo = async (req: Request, res: Response) => {
+    try {
+        const { id: groupId } = req.params
+        const groupInfo = await prisma.group.findUnique({
+            where: {
+                id: groupId
+            },
+            include: {
+                members: {
+                    select: {
+                        id: true,
+                        isAdmin: true,
+                        user: {
+                            select: {
+                                id: true,
+                                fullname: true,
+                                username: true,
+                                profilePic: true,
+                            }
+                        }
+                    }
+                },
+            },
+        });
+        if (!groupInfo) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+        res.status(200).json(groupInfo);
+    } catch (error: any) {
+        console.log('Error in getting group info and member Data', error.message);
+        res.status(500).json({ error: 'Server Error of getting the user' + error.message })
+    }
+}
+
 
 
 export const groupMessageUpdateController = async (req: Request, res: Response) => {
@@ -309,3 +344,47 @@ export const groupMessageUpdateController = async (req: Request, res: Response) 
     }
 };
 
+
+
+// function to update the group memember admin or remvoe
+export const groupMemberController = async (req: Request, res: Response) => {
+    try {
+        const { groupId, userId, type, groupMemberId } = req.body;
+        const group = await prisma.group.findUnique({
+            where: {
+                id: groupId
+            },
+        });
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        };
+        if (type === 'add') {
+            await prisma.groupMembership.update({
+                where: {
+                    id: groupMemberId
+                },
+                data: {
+                    isAdmin: true,
+                }
+            });
+            res.status(200).json({ message: 'Successfully!! Member become Admin' });
+
+        } {
+            const deleteUserMessage = await prisma.message.deleteMany({
+                where: {
+                    senderId: userId,
+                    groupId: group.id
+                }
+            });
+            const gropuMember = await prisma.groupMembership.delete({
+                where: {
+                    id: groupMemberId
+                }
+            });
+            res.status(200).json({ message: 'Successfully!! Member removed from teh group' });
+        }
+    } catch (error: any) {
+        console.log('Error in updating the group admin', error.message);
+        res.status(500).json({ error: 'Server Error member of the  group' + error.message })
+    }
+}

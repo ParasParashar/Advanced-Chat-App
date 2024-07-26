@@ -5,8 +5,12 @@ import MobileSidebar from "./MobileSidebar";
 import UserAvatar from "./UserAvatart";
 import { useSocketContext } from "../providers/SocketProvider";
 import { cn } from "../../lib/utils";
+import { useGroupInfoHook } from "../../../hooks/useSidebarHook";
+import { Button } from "../ui/button";
+import { IoMdInformationCircleOutline } from "react-icons/io";
 
 export default function GroupHeader() {
+  const { onOpen } = useGroupInfoHook();
   const { selectedConversation } = useConversation();
   const { socket } = useSocketContext();
   const [isTyping, setIsTyping] = useState({
@@ -64,7 +68,15 @@ export default function GroupHeader() {
             </div>
           </div>
         </div>
-        <MenuPopover type="chat" />
+        {/* <MenuPopover type="chat" /> */}
+        <Button
+          variant={"destructive"}
+          size={"icon2"}
+          className="rounded-full"
+          onClick={() => onOpen()}
+        >
+          <IoMdInformationCircleOutline size={20} />
+        </Button>
       </div>
     </header>
   );

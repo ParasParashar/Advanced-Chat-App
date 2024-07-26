@@ -79,7 +79,7 @@ const MenuPopover = ({ type, conversationId }: props) => {
       >
         <Button
           variant={"ghost"}
-          className="rounded-full hover:bg-secondary w-7 h-7  rounded-full"
+          className=" hover:bg-secondary w-7 h-7  rounded-full"
           size={"icon"}
         >
           <CiMenuKebab size={20} />

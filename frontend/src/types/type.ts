@@ -4,6 +4,11 @@ export type User = {
     fullname: string
     profilePic: string
 }
+export type MemberType = {
+    user: User,
+    id: string
+    isAdmin: boolean
+}
 
 export type MessageType = {
     id: string;
@@ -59,3 +64,4 @@ export type GroupMessageType = {
     messages: GroupMessageT[] | []
 
 }
+

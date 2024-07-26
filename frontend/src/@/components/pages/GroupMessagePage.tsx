@@ -7,6 +7,7 @@ import GroupMessageContainer from "../shared/GroupMessageContainer";
 import { useParams } from "react-router-dom";
 import { useSocketContext } from "../providers/SocketProvider";
 import { useEffect } from "react";
+import GroupInfoSidebar from "../shared/GroupInfoSidebar";
 
 export default function GroupMessagePage() {
   const { selectedConversation } = useConversation();
@@ -39,11 +40,14 @@ export default function GroupMessagePage() {
           </div>
         </>
       ) : (
-        <>
-          <GroupHeader />
-          <GroupMessageContainer />
-          <GroupMessageInput />
-        </>
+        <div className="flex  items-center w-full h-full">
+          <section className="flex flex-col w-full h-full ">
+            <GroupHeader />
+            <GroupMessageContainer />
+            <GroupMessageInput />
+          </section>
+          <GroupInfoSidebar />
+        </div>
       )}
     </main>
   );

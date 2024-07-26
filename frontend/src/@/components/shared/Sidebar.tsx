@@ -138,9 +138,11 @@ export default function Sidebar() {
               lastMessage={user.message.body}
               profilePic={user.participants.profilePic}
               isSeen={
-                user.message.seenByIds?.includes(
-                  authUser?.id as string
-                ) as boolean
+                user.type === "group"
+                  ? (user.message.seenByIds?.includes(
+                      authUser?.id as string
+                    ) as boolean)
+                  : user.message.seen
               }
               unseenMessages={user.unseenMesssages}
               type={user.type}

@@ -267,7 +267,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
             return {
                 message: item?.messages[0] ? item?.messages[0] : { body: "New group Chat", createdAt: Date.now(), seen: false },
                 participants: { id: item.id, fullname: item.name },
-                id: item.id,
+                id: item.conversationId,
                 unseenMesssages: unseenMessages,
                 type: 'group',
             }
