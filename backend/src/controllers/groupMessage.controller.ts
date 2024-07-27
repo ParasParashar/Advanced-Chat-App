@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from '../db/prisma.js';
-import { io } from "../socket/socket.js";
+import { getReceiverSocketId, io } from "../socket/socket.js";
 
 // creating message
 export const createGroupMessageController = async (req: Request, res: Response) => {
@@ -76,10 +76,20 @@ export const createGroupMessageController = async (req: Request, res: Response) 
                 }
             }
         });
+        const groupInfo = {
+            id: group.id,
+            fullname: group.name
+        }
+        const messageSend = { ...newMessage, groupInfo }
+        group.members.forEach((user) => {
+            const reciverSocketId = getReceiverSocketId(user.userId)
+            io.to(reciverSocketId).emit('group-message', messageSend)
+        });
 
-        io.to(groupId).emit('group-message', newMessage);
+        /* this is optional */
+        io.to(groupId).emit('group-message', messageSend);
 
-        res.status(200).json(newMessage)
+        res.status(200).json(messageSend)
 
     } catch (error: any) {
         console.error(error.message, 'group message creation error');
@@ -164,7 +174,7 @@ export const getGroupMessageController = async (req: Request, res: Response) => 
 
 };
 
-
+// function to create  a group
 export const createGroupController = async (req: Request, res: Response) => {
     try {
         const adminId = req.user.id;
@@ -270,7 +280,7 @@ export const getGroupInfo = async (req: Request, res: Response) => {
 }
 
 
-
+// function to update the message of the group
 export const groupMessageUpdateController = async (req: Request, res: Response) => {
     try {
         const userId = req.user.id;
@@ -326,6 +336,7 @@ export const groupMessageUpdateController = async (req: Request, res: Response) 
                 senderId: true,
                 createdAt: true,
                 seenByIds: true,
+                conversationId: true,
                 sender: {
                     select: {
                         id: true,
@@ -367,24 +378,177 @@ export const groupMemberController = async (req: Request, res: Response) => {
                     isAdmin: true,
                 }
             });
-            res.status(200).json({ message: 'Successfully!! Member become Admin' });
 
-        } {
-            const deleteUserMessage = await prisma.message.deleteMany({
+        }
+        if (type === 'remove') {
+            await prisma.message.deleteMany({
                 where: {
                     senderId: userId,
                     groupId: group.id
                 }
             });
-            const gropuMember = await prisma.groupMembership.delete({
+            await prisma.groupMembership.delete({
                 where: {
                     id: groupMemberId
                 }
             });
-            res.status(200).json({ message: 'Successfully!! Member removed from teh group' });
-        }
+        };
+        const message = type == 'add' ? 'become admin of the group' : 'removed from the group';
+        res.status(200).json({ message: `Successfully!! Member ${message} ` });
     } catch (error: any) {
         console.log('Error in updating the group admin', error.message);
         res.status(500).json({ error: 'Server Error member of the  group' + error.message })
     }
 }
+
+
+// functino to add a new member to the group
+export const addGroupMemberController = async (req: Request, res: Response) => {
+    try {
+        const { groupId, members } = req.body;
+        if (!members && members.length === 0) {
+            console.log('work')
+            res.status(404).json({ error: "Please select a user to add to group" })
+        }
+        await Promise.all(
+            members.map(async (userId: any) => {
+                await prisma.groupMembership.create({
+                    data: {
+                        groupId: groupId,
+                        isAdmin: false,
+                        userId: userId
+                    }
+                });
+            })
+        );
+
+
+        res.status(200).json({ message: ' Successfully!! New Members added' })
+
+    } catch (error: any) {
+        console.error(error.message, 'add new member to group error');
+        return res.status(500).json({ error: 'Server error' + error.message });
+
+    }
+
+};
+
+
+// function to leave a group
+export const leaveGroupController = async (req: Request, res: Response) => {
+    try {
+        const { groupId, userId } = req.body;
+        const group = await prisma.group.findUnique({
+            where: {
+                id: groupId
+            },
+        });
+        if (!group) {
+            return res.status(404).json({ error: "Group not found" });
+        };
+        await prisma.message.deleteMany({
+            where: {
+                senderId: userId,
+                groupId: group.id
+            }
+        });
+        const memberInfo = await prisma.groupMembership.findFirst({
+            where: {
+                groupId: group.id,
+                userId: userId
+            }
+        });
+        if (!memberInfo) {
+            return res.status(404).json({ error: "you are not a member of this group" });
+        };
+        await prisma.groupMembership.delete({
+            where: { id: memberInfo.id }
+        })
+        res.status(200).json({ message: `Now you not the member of ${group.name}` });
+    } catch (error: any) {
+        console.log('Error in leaving the group', error.message);
+        res.status(500).json({ error: 'Server Error leaving the  group' + error.message })
+    }
+};
+
+// function to delete a group
+export const deleteGroupController = async (req: Request, res: Response) => {
+    try {
+        const { id: groupId } = req.params;
+
+        const group = await prisma.group.findUnique({
+            where: {
+                id: groupId
+            },
+        });
+
+        if (!group) {
+            return res.status(404).json({ error: "Group not found" });
+        }
+
+        const conversation = await prisma.conversation.findFirst({
+            where: {
+                groupId: group.id,
+                isGroupChat: true,
+            }
+        });
+
+        if (conversation) {
+            await prisma.message.deleteMany({
+                where: {
+                    conversationId: conversation.id,
+                }
+            });
+
+            await prisma.conversation.delete({
+                where: { id: conversation.id }
+            });
+        }
+
+        await prisma.groupMembership.deleteMany({
+            where: {
+                groupId: group.id,
+            }
+        });
+
+        await prisma.group.delete({
+            where: { id: group.id }
+        });
+
+        res.status(200).json({ message: `Group deleted successfully` });
+    } catch (error: any) {
+        console.log('Error in deleting the group', error.message);
+        res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+};
+
+// function to delete a group message
+export const deleteGroupMessagesController = async (req: Request, res: Response) => {
+    try {
+        const { id: groupId } = req.params;
+
+        const group = await prisma.group.findUnique({
+            where: {
+                id: groupId
+            },
+        });
+
+        if (!group) {
+            return res.status(404).json({ error: "Group not found" });
+        }
+
+
+        await prisma.message.deleteMany({
+            where: {
+                groupId: group.id
+            }
+        });
+
+
+        res.status(200).json({ message: `Group messages deleted successfully` });
+    } catch (error: any) {
+        console.log('Error in deleting messages of  the group', error.message);
+        res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+}
+

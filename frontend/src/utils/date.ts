@@ -21,6 +21,23 @@ export const formatDayOnly = (date: string) => {
         });
     }
 };
+export const formatDateForSidebar = (date: string) => {
+    const dateOnly = new Date(date)
+    const currentDate = days[new Date().getDay()];
+    const day = days[dateOnly.getDay()]
+    if (day === currentDate) {
+        return dateOnly.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    } else {
+        return dateOnly.toLocaleDateString([], {
+            day: "2-digit",
+            month: "short",
+            year: 'numeric'
+        });
+    }
+};
 
 
 export const formatMessageDate = (date: string) => {

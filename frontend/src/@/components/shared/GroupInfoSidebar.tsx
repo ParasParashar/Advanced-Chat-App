@@ -7,39 +7,89 @@ import { UserSkeleton } from "../Loaders/UserSkeleton";
 import GroupInfoCard from "./GroupInfoCard";
 import { BiTrash } from "react-icons/bi";
 import { CiLogout } from "react-icons/ci";
-import { IoIosPersonAdd } from "react-icons/io";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { formatGroupDate } from "../../../utils/date";
-import { MemberType } from "../../../types/type";
+import { GroupInfo, MemberType, User } from "../../../types/type";
+import AddUsersToGroup from "./AddUserToGroup";
+import toast from "react-hot-toast";
 
 const GroupInfoSidebar = () => {
   const { id: groupId } = useParams();
-  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: authUser } = useQuery<User>({ queryKey: ["authUser"] });
+  const { data, isPending } = useQuery<GroupInfo>({ queryKey: ["groupInfo"] });
   const { isOpen, onClose } = useGroupInfoHook();
-  const { data, isPending } = useQuery({
-    queryKey: ["groupInfo"],
-    queryFn: async () => {
-      const res = await axios.get(`/api/group/info/${groupId}`);
-      if (res.data.error)
-        throw new Error(res.data.error || "Error in getting the group info");
-      return res.data;
+
+  const { mutate: leaveGroup, isPending: isLeavePending } = useMutation({
+    mutationFn: async () => {
+      try {
+        const { data } = await axios.post("/api/group/leave", {
+          groupId: groupId,
+          userId: authUser?.id,
+        });
+
+        if (data.error) throw new Error(data.error || "Group leave error");
+        return data;
+      } catch (error: any) {
+        throw new Error(error.response.data.error || "Failed to leave a group");
+      }
+    },
+    onSuccess: (data: { message: string }) => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      navigate("/");
+      toast.success(data.message);
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
     },
   });
+  const { mutate: deleteGroup, isPending: isDeletePending } = useMutation({
+    mutationFn: async () => {
+      try {
+        const { data } = await axios.delete(`/api/group/delete/${groupId}`);
+
+        if (data.error) throw new Error(data.error || "Deleting group error");
+        return data;
+      } catch (error: any) {
+        throw new Error(
+          error.response.data.error || "Failed to delete  a group"
+        );
+      }
+    },
+    onSuccess: (data: { message: string }) => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      navigate("/");
+      toast.success(data.message);
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   const isuserAdmin = data?.members
     .filter((user: MemberType) => user.isAdmin)
     .map((user: MemberType) => user.user.id)
-    .includes(authUser?.id);
+    .includes(authUser?.id as string);
+
   return (
     <aside
       className={cn(
-        "hidden md:w-[450px]  h-full overflow-y-auto main-scrollbar bg-gradient-to-br to-sky-100 from-slate-100 via-indigo-300",
-        isOpen && "md:block shadow-lg "
+        "hidden md:w-[450px]  h-full overflow-y-auto  transform transition-transform duration-300 ease-in-out main-scrollbar bg-gradient-to-br to-sky-100 from-slate-100 via-indigo-300",
+        isOpen
+          ? "block shadow-lg  md:relative fixed z-50  inset-0 translate-x-0    opacity-100"
+          : "opacity-0 pointer-events-none z-0 translate-x-full"
       )}
     >
-      <section className="flex flex-col  w-full  h-full">
-        <div className="flex p-1 border-b items-center justify-around">
+      <section
+        className={cn(
+          "flex flex-col  w-fulltransform transition-transform duration-300 h-full ease-in",
+          isOpen ? "translate-x-0  opacity-100 " : "translate-x-full opacity-0 "
+        )}
+      >
+        <div className="flex p-1 border-b items-center justify-between md:justify-around">
           <Button
             className="rounded-full"
             onClick={() => onClose()}
@@ -88,21 +138,32 @@ const GroupInfoSidebar = () => {
         </div>
         <div className="flex flex-col gap-1 p-2  py-3 bg-indigo-300/50">
           <Button
+            disabled={isLeavePending || isPending || isDeletePending}
             variant={"destructive"}
             className="  flex items-center justify-between hover:opacity-70"
+            onClick={(e) => {
+              e.preventDefault();
+              leaveGroup();
+            }}
           >
             <CiLogout size={20} />
             Leave Group
           </Button>
           {isuserAdmin && (
             <>
-              <Button className=" bg-sky-300/50 hover:bg-sky-400 flex items-center justify-between hover:opacity-70">
-                <IoIosPersonAdd size={20} />
-                Add User
-              </Button>
+              <AddUsersToGroup
+                groupId={groupId as string}
+                members={data?.members as MemberType[]}
+                groupName={data?.sname as string}
+              />
               <Button
+                disabled={isLeavePending || isPending || isDeletePending}
                 variant={"destructive"}
                 className="flex items-center justify-between hover:opacity-70"
+                onClick={(e) => {
+                  e.preventDefault();
+                  deleteGroup();
+                }}
               >
                 <BiTrash size={20} />
                 Delete Group

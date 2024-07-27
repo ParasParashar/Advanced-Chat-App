@@ -10,7 +10,7 @@ import LoadingSpinner from "../Loaders/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 
 type props = {
-  type: "conversation" | "chat";
+  type: "conversation" | "chat" | "group";
   conversationId?: string;
 };
 
@@ -24,6 +24,8 @@ const MenuPopover = ({ type, conversationId }: props) => {
         return `/api/messages/conversation/${conversationId}`;
       case "chat":
         return `/api/messages/conversation/chat/${selectedConversation?.id}`;
+      case "group":
+        return `/api/group/messagesdelete/${selectedConversation?.id}`;
       default:
         return "/api";
     }
@@ -55,6 +57,11 @@ const MenuPopover = ({ type, conversationId }: props) => {
       ]);
       if (type == "conversation") {
         navigate("/");
+      }
+      if (type == "group") {
+        queryClient.invalidateQueries({
+          queryKey: ["getGroupMessage", selectedConversation?.id],
+        });
       }
       toast.success(data.message);
     },

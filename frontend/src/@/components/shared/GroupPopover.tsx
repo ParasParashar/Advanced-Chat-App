@@ -3,8 +3,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { CiMenuKebab } from "react-icons/ci";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useMutation } from "@tanstack/react-query";
-import { FaSpinner, FaUser } from "react-icons/fa";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FaUser } from "react-icons/fa";
 import { IoRemoveCircleOutline } from "react-icons/io5";
 
 type props = {
@@ -14,20 +14,7 @@ type props = {
 };
 type mutationType = "remove" | "add";
 const GroupPopover = ({ groupId, userId, groupMemberId }: props) => {
-  // l  const queryClient = useQueryClient();
-  // const navigate = useNavigate();
-  // const getUrl = () => {
-  //   switch (type) {
-  //     case "conversation":
-  //       return `/api/messages/conversation/${conversationId}`;
-  //     case "chat":
-  //       return `/api/messages/conversation/chat/${selectedConversation?.id}`;
-  //     default:
-  //       return "/api";
-  //   }
-  // };
-
-  // const endPoint = getUrl();
+  const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (type: mutationType) => {
@@ -46,6 +33,7 @@ const GroupPopover = ({ groupId, userId, groupMemberId }: props) => {
       }
     },
     onSuccess: (data: { message: string }) => {
+      queryClient.invalidateQueries({ queryKey: ["groupInfo"] });
       toast.success(data.message);
     },
     onError: (error: any) => {

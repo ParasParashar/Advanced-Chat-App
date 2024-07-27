@@ -2,7 +2,12 @@ import SidebarItem from "./SidebarItem";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { UserSkeleton } from "../Loaders/UserSkeleton";
-import { MessageType, SidebarData, User } from "../../../types/type";
+import {
+  GroupMessageT,
+  MessageType,
+  SidebarData,
+  User,
+} from "../../../types/type";
 import SearchModal from "./SearchModal";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
@@ -29,6 +34,7 @@ export default function Sidebar() {
       }
     },
   });
+
   useEffect(() => {
     socket?.on("new-message", (data: MessageType) => {
       queryClient.setQueryData(
@@ -43,6 +49,7 @@ export default function Sidebar() {
                     body: data.body,
                     conversationId: data.conversationId,
                     seen: data.seen,
+                    createdAt: data.createdAt,
                   },
                   unseenMesssages:
                     authUser?.id === data.senderId
@@ -78,6 +85,7 @@ export default function Sidebar() {
                 body: data.body,
                 conversationId: data.conversationId as string,
                 seen: data.seen,
+                createdAt: data.createdAt,
               },
               participants:
                 authUser?.id !== data.senderId ? receiverSide : senderSide,
@@ -90,8 +98,59 @@ export default function Sidebar() {
       );
     });
 
-    socket?.on("group-message", () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    socket?.on("group-message", (data: GroupMessageT) => {
+      queryClient.setQueryData(
+        ["conversations"],
+        (oldCoversations: SidebarData[]) => {
+          const updatedCon = oldCoversations.map(
+            (conversation: SidebarData) => {
+              if (conversation.id === data.groupId) {
+                return {
+                  ...conversation,
+                  message: {
+                    body: data.body,
+                    conversationId: data.conversationId,
+                    seen: data.seen,
+                    createdAt: data.createdAt,
+                  },
+                  unseenMesssages:
+                    authUser?.id === data.senderId
+                      ? conversation.unseenMesssages
+                      : conversation.unseenMesssages + 1,
+                  participants: {
+                    id: data.groupInfo?.id as string,
+                    fullname: data.groupInfo?.fullname as string,
+                    profilePic: "",
+                    username: "",
+                  },
+                };
+              }
+              return conversation;
+            }
+          );
+          if (!updatedCon.some((conv) => conv.id === data.groupId)) {
+            updatedCon.push({
+              id: data.groupId as string,
+              message: {
+                body: data.body,
+                conversationId: data.conversationId,
+                seen: data.seen,
+                seenByIds: data.seenByIds,
+                createdAt: data.createdAt,
+              },
+              participants: {
+                id: data.groupInfo?.id as string,
+                fullname: data.groupInfo?.fullname as string,
+                profilePic: "",
+                username: "",
+              },
+              type: "group",
+              unseenMesssages: authUser?.id === data.senderId ? 0 : 1,
+            });
+          }
+          return updatedCon;
+        }
+      );
     });
     return () => {
       socket?.off("new-message");
@@ -131,12 +190,15 @@ export default function Sidebar() {
         {!isLoading &&
           users?.map((user: SidebarData) => (
             <SidebarItem
-              key={user.id}
+              key={user.participants.id}
               conversationId={user.id}
               id={user.participants.id}
               fullname={user.participants.fullname}
               lastMessage={user.message.body}
               profilePic={user.participants.profilePic}
+              unseenMessages={user.unseenMesssages}
+              type={user.type}
+              createdAt={user.message.createdAt}
               isSeen={
                 user.type === "group"
                   ? (user.message.seenByIds?.includes(
@@ -144,8 +206,6 @@ export default function Sidebar() {
                     ) as boolean)
                   : user.message.seen
               }
-              unseenMessages={user.unseenMesssages}
-              type={user.type}
             />
           ))}
       </div>

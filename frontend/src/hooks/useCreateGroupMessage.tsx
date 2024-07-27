@@ -10,36 +10,6 @@ export const useCreateGroupMessage = () => {
   const queryClient = useQueryClient();
   const { socket } = useSocketContext();
 
-  const handleUiUpdate = (data: GroupMessageT) => {
-    queryClient.setQueryData(
-      ["getGroupMessage", groupId],
-      (oldConversations: GroupMessageType[] | undefined) => {
-        if (!oldConversations) return [];
-        const messageDate = new Date(data.createdAt).toDateString();
-
-        const updatedConversations = oldConversations.map((conversation) => {
-          if (conversation.date === messageDate) {
-            return {
-              ...conversation,
-              messages: [...conversation.messages, data],
-            };
-          }
-          return conversation;
-        });
-
-        if (!updatedConversations.some((conv) => conv.date === messageDate)) {
-          updatedConversations.push({
-            date: messageDate,
-            messages: [data],
-          });
-        }
-
-        return updatedConversations;
-      }
-    );
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
-  };
-
   const { mutate, isPending } = useMutation({
     mutationFn: async (message: string) => {
       const res = await axios.post(`/api/group/message/send/${groupId}`, {
@@ -52,8 +22,37 @@ export const useCreateGroupMessage = () => {
 
   useEffect(() => {
     if (groupId && socket) {
-      socket.on("group-message", (newMessage) => {
-        handleUiUpdate(newMessage);
+      socket.on("group-message", (data: GroupMessageT) => {
+        queryClient.setQueryData(
+          ["getGroupMessage", groupId],
+          (oldConversations: GroupMessageType[] | undefined) => {
+            if (!oldConversations) return [];
+            const messageDate = new Date(data.createdAt).toDateString();
+
+            const updatedConversations = oldConversations.map(
+              (conversation) => {
+                if (conversation.date === messageDate) {
+                  return {
+                    ...conversation,
+                    messages: [...conversation.messages, data],
+                  };
+                }
+                return conversation;
+              }
+            );
+
+            if (
+              !updatedConversations.some((conv) => conv.date === messageDate)
+            ) {
+              updatedConversations.push({
+                date: messageDate,
+                messages: [data],
+              });
+            }
+
+            return updatedConversations;
+          }
+        );
       });
 
       return () => {

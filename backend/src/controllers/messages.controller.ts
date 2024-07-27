@@ -267,12 +267,12 @@ export const getUserConversations = async (req: Request, res: Response) => {
             return {
                 message: item?.messages[0] ? item?.messages[0] : { body: "New group Chat", createdAt: Date.now(), seen: false },
                 participants: { id: item.id, fullname: item.name },
-                id: item.conversationId,
+                id: item.id,
                 unseenMesssages: unseenMessages,
                 type: 'group',
             }
 
-        })
+        });
         const result = [...data, ...data2].sort((b: any, a: any) => a.message.createdAt - b.message.createdAt);;
 
         res.status(200).json(result);

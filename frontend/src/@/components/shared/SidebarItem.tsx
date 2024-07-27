@@ -7,11 +7,13 @@ import { useEffect, useState } from "react";
 import { IoCheckmarkDoneOutline, IoCheckmarkDoneSharp } from "react-icons/io5";
 import { Button } from "../ui/button";
 import UserAvatar from "./UserAvatart";
+import { formatDateForSidebar } from "../../../utils/date";
 
 type props = {
   id: string;
   fullname: string;
   profilePic: string;
+  createdAt: string;
   lastMessage: string;
   conversationId?: string;
   isSeen: boolean;
@@ -27,6 +29,7 @@ const SidebarItem = ({
   conversationId,
   type,
   isSeen,
+  createdAt,
   unseenMessages,
 }: props) => {
   const { onlineUsers, socket } = useSocketContext();
@@ -103,11 +106,11 @@ const SidebarItem = ({
   return (
     <section
       onClick={handleClick}
-      className={`flex overflow-hidden cursor-pointer duration-200 px-4 py-2 justify-between items-center bg-gray-50 hover:bg-blue-100/60 transition-all ease-in-out w-full gap-2 sidebar-animation ${
+      className={`flex overflow-hidden cursor-pointer duration-200  p-2 justify-between items-center  bg-gray-50 hover:bg-blue-100/60 transition-all ease-in-out w-full  sidebar-animation ${
         isActive ? "bg-sky-100 shadow-inner" : ""
       }`}
     >
-      <div className="flex items-center justify-start w-full">
+      <div className="flex items-center justify-start w-full relative ">
         <div className="relative object-cover rounded-full w-10 h-10 mr-4">
           {type === "group" ? (
             <UserAvatar type="group" name={fullname} />
@@ -126,9 +129,9 @@ const SidebarItem = ({
         </div>
 
         <div className="flex flex-col w-full line-clamp-1">
-          <span className="text-md font-semibold text-gray-900">
+          <div className="text-md w-full justify-between flex items-center font-semibold text-gray-900">
             {fullname}
-          </span>
+          </div>
           <span className="text-sm line-clamp-1 truncate">
             {isTyping.isTyping ? (
               <span
@@ -154,8 +157,12 @@ const SidebarItem = ({
             )}
           </span>
         </div>
+        <p className="text-[9px]  text-muted-primary absolute top-0 right-0 ">
+          {formatDateForSidebar(createdAt)}
+        </p>
       </div>
-      <div className="mr-auto transition-all duration-300 ease-in-out">
+
+      <div className="mr-auto transition-all   duration-300 ease-in-out">
         {unseenMessages !== 0 ? (
           <Button className="text-white  hover:bg-sky-500/80 bg-sky-500/80 p-1 w-7 h-7 rounded-full text-lg text-center">
             {unseenMessages}

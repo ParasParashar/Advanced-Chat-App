@@ -3,7 +3,12 @@ import useConversation from "../../../hooks/useConversation";
 import { useParams } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { FaComments, FaSpinner } from "react-icons/fa";
-import { GroupMessageT, GroupMessageType, User } from "../../../types/type";
+import {
+  GroupMessageT,
+  GroupMessageType,
+  SidebarData,
+  User,
+} from "../../../types/type";
 import axios from "axios";
 import { formatDayOnly } from "../../../utils/date";
 import GroupMessageCard from "./GroupMessageCard";
@@ -30,7 +35,7 @@ const GroupMessageContainer = () => {
         throw new Error(err.message);
       }
     },
-    refetchInterval: 5000,
+    refetchInterval: 8000,
   });
 
   // update ui function
@@ -55,7 +60,24 @@ const GroupMessageContainer = () => {
         return [];
       }
     );
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    // update the sidebar conversations
+    queryClient.setQueryData(
+      ["conversations"],
+      (oldConversations: SidebarData[]) => {
+        if (!oldConversations) {
+          return oldConversations;
+        }
+        return oldConversations.map((conversation: SidebarData) => {
+          if (conversation.message.conversationId === data.conversationId) {
+            return {
+              ...conversation,
+              unseenMesssages: 0,
+            };
+          }
+          return conversation;
+        });
+      }
+    );
   };
 
   // mutation for updating the seen status
@@ -77,7 +99,7 @@ const GroupMessageContainer = () => {
     if (groupId && socket) {
       socket.on("group-message-update", updateMessage);
       return () => {
-        socket.off("group-message-update", updateMessage);
+        socket.off("group-message-update");
       };
     }
   }, [groupId, queryClient, socket, mutate]);

@@ -9,6 +9,12 @@ export type MemberType = {
     id: string
     isAdmin: boolean
 }
+export type GroupInfo = {
+    id: string,
+    name: string,
+    members: MemberType[],
+    createdAt: string,
+}
 
 export type MessageType = {
     id: string;
@@ -29,7 +35,12 @@ export type GroupMessageT = {
     createdAt: string;
     conversationId?: string;
     sender: User;
+    groupId?: string;
     seenByIds?: string[];
+    groupInfo?: {
+        id: string,
+        fullname: string
+    }
 }
 
 export type UserMessageType = {
@@ -43,6 +54,7 @@ export type SidebarData = {
         conversationId: string
         seen: boolean
         seenByIds?: string[]
+        createdAt: string
     },
     participants: User,
     id: string,
