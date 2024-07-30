@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from '../db/prisma.js';
 import { getReceiverSocketId, io } from "../socket/socket.js";
+import { redis } from "../redis/redisClient.js";
 
 
 export const sendMessageController = async (req: Request, res: Response) => {
@@ -70,15 +71,25 @@ export const sendMessageController = async (req: Request, res: Response) => {
 
         }
         const sendMessage = { ...newMessage, receiver }
-        // adding socket io
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        const senderSocketId = getReceiverSocketId(senderId);
+        // // adding socket io
+        // const receiverSocketId = getReceiverSocketId(receiverId);
+        // const senderSocketId = getReceiverSocketId(senderId);
 
-        if (receiverSocketId && senderSocketId) {
-            io.to(senderSocketId).emit('new-message', sendMessage)
-            io.to(receiverSocketId).emit('new-message', sendMessage)
-        }
-        // also sending the response 
+        // if (receiverSocketId && senderSocketId) {
+        //     io.to(senderSocketId).emit('new-message', sendMessage)
+        //     io.to(receiverSocketId).emit('new-message', sendMessage)
+        // }
+        // Publish the message to the Redis channel for the receiver and the sender
+
+        redis.publish(`user:${receiverId}`, JSON.stringify({
+            type: 'new-message',
+            data: sendMessage
+        }));
+        redis.publish(`user:${senderId}`, JSON.stringify({
+            type: 'new-message',
+            data: sendMessage
+        }));
+
 
         return res.status(200).json(sendMessage)
 
@@ -562,10 +573,21 @@ export const updateMessageController = async (req: Request, res: Response) => {
         const receiverSocketId = getReceiverSocketId(receiverId);
         const senderSocketId = getReceiverSocketId(senderId);
 
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit('updated-message', messagesToUpdate)
-            io.to(senderSocketId).emit('updated-message', messagesToUpdate)
-        };
+        // if (receiverSocketId) {
+        //     io.to(receiverSocketId).emit('updated-message', messagesToUpdate)
+        //     io.to(senderSocketId).emit('updated-message', messagesToUpdate)
+        // };
+
+        // publishing the updated message to Redis channels for the receiver and sender
+        redis.publish(`user:${receiverId}`, JSON.stringify({
+            type: 'updated-message',
+            data: messagesToUpdate
+        }));
+        redis.publish(`user:${senderId}`, JSON.stringify({
+            type: 'updated-message',
+            data: messagesToUpdate
+        }));
+
         res.status(200).json(messagesToUpdate);
     } catch (error: any) {
         console.log('Error in updating message seen conversations', error.message);

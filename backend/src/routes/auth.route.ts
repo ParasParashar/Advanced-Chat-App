@@ -5,7 +5,7 @@ import cacheMiddleware from '../middleware/redisCache.js';
 
 const router = express.Router();
 
-router.get('/me', protectRoute, cacheMiddleware, getUserController)
+router.get('/me', protectRoute, getUserController)
 router.get('/userdata/:id', protectRoute, cacheMiddleware, getUserDataController)
 router.post('/signup', signupController)
 router.post('/login', loginController)

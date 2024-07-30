@@ -35,7 +35,7 @@ const GroupMessageContainer = () => {
         throw new Error(err.message);
       }
     },
-    refetchInterval: 8000,
+    // refetchInterval: 8000,
   });
 
   // update ui function
