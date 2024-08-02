@@ -99,7 +99,6 @@ export default function Sidebar() {
     });
 
     socket?.on("group-message", (data: GroupMessageT) => {
-      console.log("group-message", data);
       queryClient.setQueryData(
         ["conversations"],
         (oldCoversations: SidebarData[]) => {

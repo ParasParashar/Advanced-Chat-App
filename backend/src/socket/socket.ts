@@ -92,8 +92,8 @@ io.on('connection', (socket) => {
     // emit the group join message
     socket.on('join-group', (groupId) => {
         socket.join(groupId);
-        console.log('user joind', groupId)
-        subClient.subscribe(`group:${groupId}`)
+        console.log('user joind', groupId);
+        subClient.subscribe(`group:${groupId}`);
         subClient.on('message', (channel, message) => {
             const { type, data, groupMembers } = JSON.parse(message);
             switch (type) {
@@ -112,6 +112,7 @@ io.on('connection', (socket) => {
     });
     socket.on('leave-group', (groupId) => {
         socket.leave(groupId);
+        subClient.unsubscribe(`group:${groupId}`);
         console.log(`User left group: ${groupId}`);
     });
 

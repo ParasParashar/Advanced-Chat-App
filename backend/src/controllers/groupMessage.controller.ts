@@ -344,6 +344,7 @@ export const groupMessageUpdateController = async (req: Request, res: Response) 
                 createdAt: true,
                 seenByIds: true,
                 conversationId: true,
+                groupId: true,
                 sender: {
                     select: {
                         id: true,
