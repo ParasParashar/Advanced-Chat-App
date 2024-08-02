@@ -44,6 +44,7 @@ const GroupMessageContainer = () => {
     queryClient.setQueryData(
       ["getGroupMessage", groupId],
       (oldConversations: GroupMessageType[] | undefined) => {
+        if (groupId !== data.groupId) return;
         if (oldConversations) {
           return oldConversations.map((conversation) => {
             if (conversation.messages.some((msg) => msg.id === data.id)) {

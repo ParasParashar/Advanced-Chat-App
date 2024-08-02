@@ -99,6 +99,7 @@ export default function Sidebar() {
     });
 
     socket?.on("group-message", (data: GroupMessageT) => {
+      console.log("group-message", data);
       queryClient.setQueryData(
         ["conversations"],
         (oldCoversations: SidebarData[]) => {
@@ -171,7 +172,7 @@ export default function Sidebar() {
         </Link>
         <CreateGroup />
       </div>
-      <div className="rounded-full  absolute bottom-[7rem] right-[2rem] ">
+      <div className="rounded-full  absolute bottom-[7rem] right-[2rem]  z-[99999]">
         <SearchModal />
       </div>
 

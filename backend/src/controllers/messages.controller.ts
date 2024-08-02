@@ -570,8 +570,8 @@ export const updateMessageController = async (req: Request, res: Response) => {
                 conversationId: true,
             }
         });
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        const senderSocketId = getReceiverSocketId(senderId);
+        // const receiverSocketId = getReceiverSocketId(receiverId);
+        // const senderSocketId = getReceiverSocketId(senderId);
 
         // if (receiverSocketId) {
         //     io.to(receiverSocketId).emit('updated-message', messagesToUpdate)

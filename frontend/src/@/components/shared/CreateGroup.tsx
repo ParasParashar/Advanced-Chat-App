@@ -20,7 +20,7 @@ const CreateGroup = () => {
           <GrGroup size={20} />
         </div>{" "}
       </DialogTrigger>
-      <DialogContent className=" w-full overflow-y-auto main-scrollbar p-0 bg-sky-100">
+      <DialogContent className=" w-full overflow-y-auto main-scrollbar p-0 bg-sky-100 z-[999999999999]">
         <DialogTitle className="text-muted-foreground text-xl text-center p-2">
           Let&apos;s Create Group
         </DialogTitle>

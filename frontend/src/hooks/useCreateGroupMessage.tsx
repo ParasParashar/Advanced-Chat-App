@@ -26,6 +26,7 @@ export const useCreateGroupMessage = () => {
         queryClient.setQueryData(
           ["getGroupMessage", groupId],
           (oldConversations: GroupMessageType[] | undefined) => {
+            if (groupId !== data.groupId) return;
             if (!oldConversations) return [];
             const messageDate = new Date(data.createdAt).toDateString();
 

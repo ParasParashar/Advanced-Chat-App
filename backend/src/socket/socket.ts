@@ -3,6 +3,8 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import http from 'http';
 import express from 'express';
 import { redis } from '../redis/redisClient.js';
+import { channel } from 'diagnostics_channel';
+import { leaveGroupController } from '../controllers/groupMessage.controller.js';
 const app = express();
 
 const server = http.createServer(app);
@@ -32,15 +34,16 @@ io.on('connection', (socket) => {
     console.log('socket is connected', socket.id);
     const userId = socket.handshake.query.userId as string;
 
-    // adding the socket id with the userId
-    if (userId) userSocketMap[userId] = socket.id;
 
-    // io.emit is used to send the message to all the connected clients
-    io.emit('getOnlineUsers', Object.keys(userSocketMap));
-
-
-    // Subscribe to Redis channel for the user
     if (userId) {
+        // adding the socket id with the userId
+        userSocketMap[userId] = socket.id;
+
+        // io.emit is used to send the message to all the connected clients
+        io.emit('getOnlineUsers', Object.keys(userSocketMap));
+
+
+        // Subscribe to Redis channel for the user
         const userChannel = `user:${userId}`;
         subClient.subscribe(userChannel);
 
@@ -58,6 +61,7 @@ io.on('connection', (socket) => {
             }
         });
     };
+
 
     // emit the typing message
     socket.on('typing', ({ senderId, receiverId }) => {
@@ -89,6 +93,22 @@ io.on('connection', (socket) => {
     socket.on('join-group', (groupId) => {
         socket.join(groupId);
         console.log('user joind', groupId)
+        subClient.subscribe(`group:${groupId}`)
+        subClient.on('message', (channel, message) => {
+            const { type, data, groupMembers } = JSON.parse(message);
+            switch (type) {
+                case 'group-message':
+                    console.log(data, 'mesage group')
+                    groupMembers.forEach((user: any) => {
+                        const reciverSocketId = getReceiverSocketId(user.userId)
+                        io.to(reciverSocketId).emit('group-message', data)
+                    });
+                    break
+                case 'group-message-update':
+                    io.to(groupId).emit('group-message-update', data);
+                    break
+            }
+        })
     });
     socket.on('leave-group', (groupId) => {
         socket.leave(groupId);

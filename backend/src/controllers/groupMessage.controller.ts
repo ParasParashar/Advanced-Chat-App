@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from '../db/prisma.js';
 import { getReceiverSocketId, io } from "../socket/socket.js";
+import { redis } from "../redis/redisClient.js";
 
 // creating message
 export const createGroupMessageController = async (req: Request, res: Response) => {
@@ -81,13 +82,19 @@ export const createGroupMessageController = async (req: Request, res: Response) 
             fullname: group.name
         }
         const messageSend = { ...newMessage, groupInfo }
-        group.members.forEach((user) => {
-            const reciverSocketId = getReceiverSocketId(user.userId)
-            io.to(reciverSocketId).emit('group-message', messageSend)
-        });
+        // group.members.forEach((user) => {
+        //     const reciverSocketId = getReceiverSocketId(user.userId)
+        //     io.to(reciverSocketId).emit('group-message', messageSend)
+        // });
+        console.log(messageSend, 'created message------------------------')
+        redis.publish(`group:${groupId}`, JSON.stringify({
+            type: 'group-message',
+            data: messageSend,
+            groupMembers: group.members
+        }));
 
         /* this is optional */
-        io.to(groupId).emit('group-message', messageSend);
+        // io.to(groupId).emit('group-message', messageSend);
 
         res.status(200).json(messageSend)
 
@@ -346,7 +353,11 @@ export const groupMessageUpdateController = async (req: Request, res: Response) 
                 }
             },
         });
-        io.to(groupId).emit('group-message-update', messagesToUpdate);
+        // io.to(groupId).emit('group-message-update', messagesToUpdate);
+        redis.publish(`group:${groupId}`, JSON.stringify({
+            type: 'group-message-update',
+            data: messagesToUpdate,
+        }));
 
         res.status(200).json(messagesToUpdate);
     } catch (error: any) {
